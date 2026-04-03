@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { useSupabase } from "@/components/providers/SupabaseProvider";
-import type { Player, Match, MatchPlayer } from "@/types/database";
+import type { Player, Match } from "@/types/database";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -197,7 +197,7 @@ export default function RoundPage() {
                       [match.id]: parseInt(e.target.value),
                     })
                   }
-                  className="w-14 rounded border border-gray-300 px-2 py-1 text-center text-lg font-bold"
+                  className="w-14 rounded border border-gray-300 bg-white px-2 py-1 text-center text-lg font-bold text-gray-900"
                 >
                   {[0, 1, 2, 3, 4, 5].map((n) => (
                     <option key={n} value={n}>

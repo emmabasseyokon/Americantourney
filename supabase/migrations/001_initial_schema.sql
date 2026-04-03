@@ -1,0 +1,175 @@
+-- Tourney: Americano Tournament Manager
+-- Initial database schema
+
+-- Profiles (extends Supabase Auth)
+create table profiles (
+  id uuid primary key references auth.users on delete cascade,
+  email text not null,
+  display_name text,
+  avatar_url text,
+  created_at timestamptz default now()
+);
+
+alter table profiles enable row level security;
+
+create policy "Public profiles are viewable by everyone"
+  on profiles for select using (true);
+
+create policy "Users can update their own profile"
+  on profiles for update using (auth.uid() = id);
+
+-- Auto-create profile on signup
+create or replace function handle_new_user()
+returns trigger as $$
+begin
+  insert into profiles (id, email, display_name)
+  values (
+    new.id,
+    new.email,
+    coalesce(new.raw_user_meta_data->>'display_name', split_part(new.email, '@', 1))
+  );
+  return new;
+end;
+$$ language plpgsql security definer;
+
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function handle_new_user();
+
+-- Tournaments
+create table tournaments (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  total_rounds int not null check (total_rounds in (3, 4, 5)),
+  max_players int not null check (max_players in (8, 16, 32, 64)),
+  status text not null default 'draft' check (status in ('draft', 'registration', 'in_progress', 'completed')),
+  created_by uuid not null references profiles(id) on delete cascade,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+alter table tournaments enable row level security;
+
+create policy "Tournaments are viewable by everyone"
+  on tournaments for select using (true);
+
+create policy "Authenticated users can create tournaments"
+  on tournaments for insert with check (auth.uid() = created_by);
+
+create policy "Owners can update their tournaments"
+  on tournaments for update using (auth.uid() = created_by);
+
+create policy "Owners can delete their tournaments"
+  on tournaments for delete using (auth.uid() = created_by);
+
+-- Players
+create table players (
+  id uuid primary key default gen_random_uuid(),
+  tournament_id uuid not null references tournaments(id) on delete cascade,
+  name text not null,
+  gender text not null check (gender in ('male', 'female')),
+  classification text not null check (classification in ('A+', 'A', 'B+', 'B', 'C+', 'C')),
+  created_at timestamptz default now(),
+  unique(tournament_id, name)
+);
+
+alter table players enable row level security;
+
+create policy "Players are viewable by everyone"
+  on players for select using (true);
+
+create policy "Tournament owners can add players"
+  on players for insert with check (
+    auth.uid() = (select created_by from tournaments where id = tournament_id)
+  );
+
+create policy "Tournament owners can delete players"
+  on players for delete using (
+    auth.uid() = (select created_by from tournaments where id = tournament_id)
+  );
+
+-- Rounds
+create table rounds (
+  id uuid primary key default gen_random_uuid(),
+  tournament_id uuid not null references tournaments(id) on delete cascade,
+  round_number int not null,
+  status text not null default 'pending' check (status in ('pending', 'in_progress', 'completed')),
+  created_at timestamptz default now(),
+  unique(tournament_id, round_number)
+);
+
+alter table rounds enable row level security;
+
+create policy "Rounds are viewable by everyone"
+  on rounds for select using (true);
+
+create policy "Tournament owners can manage rounds"
+  on rounds for insert with check (
+    auth.uid() = (select created_by from tournaments where id = tournament_id)
+  );
+
+create policy "Tournament owners can update rounds"
+  on rounds for update using (
+    auth.uid() = (select created_by from tournaments where id = tournament_id)
+  );
+
+-- Matches
+create table matches (
+  id uuid primary key default gen_random_uuid(),
+  round_id uuid not null references rounds(id) on delete cascade,
+  court_number int not null,
+  team1_score int not null default 0 check (team1_score >= 0 and team1_score <= 5),
+  team2_score int not null default 0 check (team2_score >= 0 and team2_score <= 5),
+  status text not null default 'pending' check (status in ('pending', 'in_progress', 'completed')),
+  created_at timestamptz default now(),
+  constraint score_sum_five check (
+    status != 'completed' or (team1_score + team2_score = 5)
+  )
+);
+
+alter table matches enable row level security;
+
+create policy "Matches are viewable by everyone"
+  on matches for select using (true);
+
+create policy "Tournament owners can create matches"
+  on matches for insert with check (
+    auth.uid() = (
+      select t.created_by from tournaments t
+      join rounds r on r.tournament_id = t.id
+      where r.id = round_id
+    )
+  );
+
+create policy "Tournament owners can update matches"
+  on matches for update using (
+    auth.uid() = (
+      select t.created_by from tournaments t
+      join rounds r on r.tournament_id = t.id
+      where r.id = round_id
+    )
+  );
+
+-- Match Players (maps players to teams in matches)
+create table match_players (
+  id uuid primary key default gen_random_uuid(),
+  match_id uuid not null references matches(id) on delete cascade,
+  player_id uuid not null references players(id) on delete cascade,
+  team int not null check (team in (1, 2)),
+  unique(match_id, player_id)
+);
+
+alter table match_players enable row level security;
+
+create policy "Match players are viewable by everyone"
+  on match_players for select using (true);
+
+create policy "Tournament owners can create match players"
+  on match_players for insert with check (
+    auth.uid() = (
+      select t.created_by from tournaments t
+      join rounds r on r.tournament_id = t.id
+      join matches m on m.round_id = r.id
+      where m.id = match_id
+    )
+  );

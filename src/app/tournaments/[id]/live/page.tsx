@@ -208,7 +208,11 @@ export default function LiveTournamentPage() {
               {tournament.name}
             </h1>
             <p className="text-xs text-gray-500">
-              {players.length} players &middot; {tournament.total_rounds} rounds
+              {players.length} Registered{" "}
+              {tournament.max_players - players.length > 0
+                ? `${tournament.max_players - players.length} Remaining`
+                : ""}{" "}
+              | {tournament.total_rounds} Rounds
             </p>
           </div>
         </div>

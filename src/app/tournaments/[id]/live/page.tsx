@@ -302,7 +302,7 @@ function LivePlayersTab({ players }: { players: Player[] }) {
   return (
     <div>
       {/* Table Header */}
-      <div className="grid grid-cols-[2.5rem_1fr_5rem] sm:grid-cols-[1.5fr_3fr_1fr] items-center border-b border-gray-200 px-4 py-2 text-xs font-medium uppercase tracking-wider text-gray-400">
+      <div className="grid grid-cols-[2.5rem_1fr_5rem] sm:grid-cols-[1.5fr_2fr_1.5fr] items-center border-b border-gray-200 px-4 py-2 text-xs font-medium uppercase tracking-wider text-gray-400">
         <span>No.</span>
         <span>Name</span>
         <span>Gender</span>
@@ -312,7 +312,7 @@ function LivePlayersTab({ players }: { players: Player[] }) {
       {players.map((player, index) => (
         <div
           key={player.id}
-          className="grid grid-cols-[2.5rem_1fr_5rem] sm:grid-cols-[1.5fr_3fr_1fr] items-center border-b border-gray-100 px-4 py-4"
+          className="grid grid-cols-[2.5rem_1fr_5rem] sm:grid-cols-[1.5fr_2fr_1.5fr] items-center border-b border-gray-100 px-4 py-4"
         >
           <span className="text-sm text-gray-400">{index + 1}</span>
           <span className="text-sm font-semibold text-gray-900 uppercase">

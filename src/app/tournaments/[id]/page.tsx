@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { useSupabase } from "@/components/providers/SupabaseProvider";
 import { generateRoundDraw } from "@/lib/draw/americano";
+import type { RoundDraw } from "@/lib/draw/types";
 import type {
   Tournament,
   Player,
@@ -19,8 +20,6 @@ import {
   Swords,
   BarChart3,
   UserPlus,
-  Trash2,
-  Pencil,
   Share2,
   Copy,
   Shuffle,
@@ -63,6 +62,7 @@ export default function TournamentDetailPage() {
   >([]);
   const [generating, setGenerating] = useState(false);
   const [genError, setGenError] = useState("");
+  const [previewDraws, setPreviewDraws] = useState<RoundDraw[] | null>(null);
 
   // Rankings state
   const [rankings, setRankings] = useState<
@@ -292,32 +292,24 @@ export default function TournamentDetailPage() {
     setPlayers(players.filter((p) => p.id !== playerId));
   }
 
-  async function handleGenerateAllRounds() {
+  function handleGeneratePreview() {
     if (!tournament) return;
     setGenError("");
-    setGenerating(true);
-
-    if (rounds.length > 0) {
-      setGenError("Rounds have already been generated.");
-      setGenerating(false);
-      return;
-    }
 
     if (players.length < tournament.max_players) {
       setGenError(
         `Need ${tournament.max_players} players. Currently have ${players.length}.`
       );
-      setGenerating(false);
       return;
     }
 
     try {
       const pairingHistory = new Set<string>();
+      const draws: RoundDraw[] = [];
 
       for (let roundNum = 1; roundNum <= tournament.total_rounds; roundNum++) {
         const draw = generateRoundDraw(players, roundNum, pairingHistory);
 
-        // Track new pairs for subsequent rounds
         for (const matchDraw of draw.matches) {
           const p1 = [matchDraw.team1.player1.id, matchDraw.team1.player2.id]
             .sort()
@@ -329,11 +321,29 @@ export default function TournamentDetailPage() {
           pairingHistory.add(p2);
         }
 
+        draws.push(draw);
+      }
+
+      setPreviewDraws(draws);
+    } catch (err) {
+      setGenError(
+        err instanceof Error ? err.message : "Failed to generate draws."
+      );
+    }
+  }
+
+  async function handleLockDraws() {
+    if (!tournament || !previewDraws) return;
+    setGenerating(true);
+    setGenError("");
+
+    try {
+      for (const draw of previewDraws) {
         const { data: round, error: roundErr } = await supabase
           .from("rounds")
           .insert({
             tournament_id: tournamentId,
-            round_number: roundNum,
+            round_number: draw.roundNumber,
             status: "pending",
           })
           .select()
@@ -386,10 +396,11 @@ export default function TournamentDetailPage() {
         .update({ status: "in_progress" })
         .eq("id", tournamentId);
 
+      setPreviewDraws(null);
       await fetchData();
     } catch (err) {
       setGenError(
-        err instanceof Error ? err.message : "Failed to generate draws."
+        err instanceof Error ? err.message : "Failed to save draws."
       );
     } finally {
       setGenerating(false);
@@ -503,7 +514,11 @@ export default function TournamentDetailPage() {
             canGenerate={canGenerate}
             generating={generating}
             genError={genError}
-            onGenerate={handleGenerateAllRounds}
+            previewDraws={previewDraws}
+            players={players}
+            onGeneratePreview={handleGeneratePreview}
+            onLockDraws={handleLockDraws}
+            onCancelPreview={() => setPreviewDraws(null)}
             onUpdateMatch={handleUpdateMatch}
           />
         )}
@@ -673,6 +688,9 @@ function PlayersTab({
   onEdit: (player: Player) => void;
   onDelete: (id: string) => void;
 }) {
+  const [menuOpen, setMenuOpen] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<Player | null>(null);
+
   if (players.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-gray-400">
@@ -691,7 +709,7 @@ function PlayersTab({
       )}
 
       {/* Table Header */}
-      <div className="grid grid-cols-[2.5rem_1fr_4rem_5rem_3.5rem] sm:grid-cols-[3rem_2fr_1fr_1fr_4rem] items-center border-b border-gray-200 px-4 py-2 text-xs font-medium uppercase tracking-wider text-gray-400">
+      <div className="grid grid-cols-[2.5rem_1fr_4rem_5rem_2rem] sm:grid-cols-[3rem_2fr_1fr_1fr_2.5rem] items-center border-b border-gray-200 px-4 py-2 text-xs font-medium uppercase tracking-wider text-gray-400">
         <span>No.</span>
         <span>Name</span>
         <span>Class</span>
@@ -703,7 +721,7 @@ function PlayersTab({
       {players.map((player, index) => (
         <div
           key={player.id}
-          className="grid grid-cols-[2.5rem_1fr_4rem_5rem_3.5rem] sm:grid-cols-[3rem_2fr_1fr_1fr_4rem] items-center border-b border-gray-100 px-4 py-4"
+          className="grid grid-cols-[2.5rem_1fr_4rem_5rem_2rem] sm:grid-cols-[3rem_2fr_1fr_1fr_2.5rem] items-center border-b border-gray-100 px-4 py-4"
         >
           <span className="text-sm text-gray-400">{index + 1}</span>
           <span className="text-sm font-semibold text-gray-900 uppercase">
@@ -715,22 +733,76 @@ function PlayersTab({
           <span className="text-sm font-bold text-gray-900 uppercase">
             {player.gender}
           </span>
-          <div className="flex items-center gap-2">
+          <div className="relative">
             <button
-              onClick={() => onEdit(player)}
-              className="text-gray-300 hover:text-blue-500 transition-colors"
+              onClick={() =>
+                setMenuOpen(menuOpen === player.id ? null : player.id)
+              }
+              className="p-1 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
             >
-              <Pencil className="h-4 w-4" />
+              <MoreVertical className="h-4 w-4" />
             </button>
-            <button
-              onClick={() => onDelete(player.id)}
-              className="text-gray-300 hover:text-red-500 transition-colors"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
+
+            {menuOpen === player.id && (
+              <>
+                <div
+                  className="fixed inset-0 z-30"
+                  onClick={() => setMenuOpen(null)}
+                />
+                <div className="absolute right-0 top-8 z-40 w-32 rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
+                  <button
+                    onClick={() => {
+                      onEdit(player);
+                      setMenuOpen(null);
+                    }}
+                    className="flex w-full items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => {
+                      setConfirmDelete(player);
+                      setMenuOpen(null);
+                    }}
+                    className="flex w-full items-center px-4 py-2.5 text-sm text-red-600 hover:bg-gray-50 cursor-pointer"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       ))}
+
+      {/* Delete Confirmation Modal */}
+      {confirmDelete && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40">
+          <div className="w-full max-w-sm rounded-lg bg-white p-6 shadow-xl">
+            <h2 className="text-lg font-bold text-gray-900">Delete player?</h2>
+            <p className="mt-2 text-sm text-gray-500">
+              Are you sure you want to delete <strong>{confirmDelete.name}</strong>? This action cannot be undone.
+            </p>
+            <div className="mt-5 flex gap-3 justify-end">
+              <button
+                onClick={() => setConfirmDelete(null)}
+                className="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  onDelete(confirmDelete.id);
+                  setConfirmDelete(null);
+                }}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors cursor-pointer"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -774,7 +846,11 @@ function MatchupsTab({
   canGenerate,
   generating,
   genError,
-  onGenerate,
+  previewDraws,
+  players,
+  onGeneratePreview,
+  onLockDraws,
+  onCancelPreview,
   onUpdateMatch,
 }: {
   tournament: Tournament;
@@ -786,7 +862,11 @@ function MatchupsTab({
   canGenerate: boolean;
   generating: boolean;
   genError: string;
-  onGenerate: () => void;
+  previewDraws: RoundDraw[] | null;
+  players: Player[];
+  onGeneratePreview: () => void;
+  onLockDraws: () => void;
+  onCancelPreview: () => void;
   onUpdateMatch: (matchId: string, updates: Partial<Match>) => Promise<void>;
 }) {
   const [activeRound, setActiveRound] = useState(1);
@@ -815,7 +895,6 @@ function MatchupsTab({
   );
 
   // Build map: player ID → court label for players currently in_progress in OTHER rounds
-  // This is used to show court badges on future rounds (e.g. "C1" next to a player's name)
   const playerActiveCourt = new Map<string, string>();
   for (const rd of matchupData) {
     if (rd.round.round_number === activeRound) continue;
@@ -843,7 +922,6 @@ function MatchupsTab({
     }
   }
 
-  // A match is "not ready" if any of its players are still busy in a previous round
   function isMatchNotReady(
     match: Match & { team1Players: Player[]; team2Players: Player[] }
   ): boolean {
@@ -887,6 +965,118 @@ function MatchupsTab({
     setMenuOpen(null);
   }
 
+  // Build player map for preview rendering
+  const playerMap = new Map(players.map((p) => [p.id, p]));
+
+  // Preview mode: show generated draws before locking
+  if (previewDraws && rounds.length === 0) {
+    const previewRound = previewDraws.find((d) => d.roundNumber === activeRound);
+
+    return (
+      <div>
+        {/* Preview banner */}
+        <div className="mx-4 mt-4 rounded-lg bg-amber-50 border border-amber-200 p-3 text-sm text-amber-700">
+          Preview — regenerate if unhappy, or lock to confirm draws.
+        </div>
+
+        {/* Round Tabs */}
+        <div className="flex border-b border-gray-200 bg-white overflow-x-auto mt-3">
+          {roundTabs.map((r) => (
+            <button
+              key={r}
+              onClick={() => setActiveRound(r)}
+              className={`flex-1 min-w-[5rem] py-3 text-center text-xs font-bold uppercase tracking-wide transition-colors cursor-pointer ${
+                activeRound === r
+                  ? "text-blue-600 border-b-3 border-blue-600"
+                  : "text-gray-400 hover:text-gray-600"
+              }`}
+            >
+              Round {r}
+            </button>
+          ))}
+        </div>
+
+        {/* Preview match cards */}
+        <div className="p-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            {previewRound?.matches.map((matchDraw, idx) => (
+              <div
+                key={idx}
+                className="rounded-xl border border-dashed border-amber-300 bg-white p-4 shadow-sm"
+              >
+                <div className="mb-3">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-amber-500">
+                    Preview
+                  </span>
+                </div>
+
+                {/* Team 1 */}
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-md bg-gray-300 text-xs font-bold text-white">
+                    -
+                  </span>
+                  <div className="flex items-center gap-1 text-sm">
+                    <span className="font-semibold text-gray-900 uppercase">
+                      {playerMap.get(matchDraw.team1.player1.id)?.name ?? matchDraw.team1.player1.name}
+                    </span>
+                    <span className="text-gray-400">/</span>
+                    <span className="font-semibold text-gray-900 uppercase">
+                      {playerMap.get(matchDraw.team1.player2.id)?.name ?? matchDraw.team1.player2.name}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Team 2 */}
+                <div className="flex items-center gap-2">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-md bg-gray-300 text-xs font-bold text-white">
+                    -
+                  </span>
+                  <div className="flex items-center gap-1 text-sm">
+                    <span className="font-semibold text-gray-900 uppercase">
+                      {playerMap.get(matchDraw.team2.player1.id)?.name ?? matchDraw.team2.player1.name}
+                    </span>
+                    <span className="text-gray-400">/</span>
+                    <span className="font-semibold text-gray-900 uppercase">
+                      {playerMap.get(matchDraw.team2.player2.id)?.name ?? matchDraw.team2.player2.name}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Preview action buttons */}
+        <div className="flex gap-3 px-4 pb-4">
+          <button
+            onClick={onCancelPreview}
+            className="flex-1 rounded-lg border border-gray-300 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onGeneratePreview}
+            className="flex-1 rounded-lg border border-blue-300 bg-blue-50 py-2.5 text-sm font-medium text-blue-600 hover:bg-blue-100 transition-colors cursor-pointer"
+          >
+            <Shuffle className="mr-1.5 h-4 w-4 inline" />
+            Regenerate
+          </button>
+          <button
+            onClick={onLockDraws}
+            disabled={generating}
+            className="flex-1 rounded-lg bg-green-600 py-2.5 text-sm font-medium text-white hover:bg-green-700 transition-colors disabled:opacity-50 cursor-pointer"
+          >
+            {generating ? "Locking..." : "Lock Draws"}
+          </button>
+        </div>
+
+        {genError && (
+          <p className="px-4 pb-4 text-sm text-red-600">{genError}</p>
+        )}
+      </div>
+    );
+  }
+
   // No rounds generated yet — show generate button
   if (rounds.length === 0) {
     return (
@@ -897,9 +1087,9 @@ function MatchupsTab({
             <p className="mb-4 text-sm text-gray-500">
               Generate all {tournament.total_rounds} rounds at once
             </p>
-            <Button onClick={onGenerate} disabled={generating}>
+            <Button onClick={onGeneratePreview}>
               <Shuffle className="mr-2 h-4 w-4" />
-              {generating ? "Generating..." : "Generate All Rounds"}
+              Generate All Rounds
             </Button>
             {genError && (
               <p className="mt-3 text-sm text-red-600">{genError}</p>

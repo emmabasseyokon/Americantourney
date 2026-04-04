@@ -1152,64 +1152,84 @@ function MatchupsTab({
       {/* Record Scores Modal */}
       {scoreModal && (
         <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-black/40">
-          <div className="w-full max-w-sm rounded-t-2xl sm:rounded-2xl bg-white shadow-xl">
-            <div className="flex items-center justify-between bg-blue-600 px-5 py-4 rounded-t-2xl sm:rounded-t-2xl">
+          <div className="w-full max-w-md rounded-t-2xl sm:rounded-2xl bg-white shadow-xl">
+            {/* Blue header */}
+            <div className="flex items-center justify-between bg-blue-600 px-5 py-4 rounded-t-2xl">
               <h2 className="text-base font-bold text-white">
                 Record scores
               </h2>
               <button
                 onClick={() => setScoreModal(null)}
-                className="text-white/80 hover:text-white"
+                className="text-white/80 hover:text-white cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <div className="p-5 space-y-4">
+
+            <div className="p-5 space-y-5">
               {/* Team 1 */}
               <div>
-                <p className="text-sm font-medium text-gray-900 mb-1.5">
-                  {scoreModal.team1Players
-                    .map((p) => p.name)
-                    .join(" / ")}
-                </p>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 text-sm mb-3">
+                  {scoreModal.team1Players.map((p, i) => (
+                    <span key={p.id} className="flex items-center gap-1">
+                      {i > 0 && <span className="text-gray-400">/</span>}
+                      <span className="font-semibold text-gray-900 uppercase">
+                        {p.name}
+                      </span>
+                    </span>
+                  ))}
+                </div>
+                <div className="flex items-center gap-3 border-b-2 border-green-500 pb-2">
                   <span className="text-sm text-gray-500">Score</span>
-                  <select
+                  <input
+                    type="number"
+                    min={0}
+                    max={5}
                     value={team1Score}
-                    onChange={(e) => setTeam1Score(parseInt(e.target.value))}
-                    className="w-16 rounded border border-gray-300 bg-white px-2 py-1.5 text-center text-lg font-bold text-gray-900"
-                  >
-                    {[0, 1, 2, 3, 4, 5].map((n) => (
-                      <option key={n} value={n}>
-                        {n}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(e) => {
+                      const val = Math.min(5, Math.max(0, parseInt(e.target.value) || 0));
+                      setTeam1Score(val);
+                    }}
+                    className="w-12 bg-transparent text-lg font-bold text-gray-900 outline-none"
+                  />
                 </div>
               </div>
 
               {/* Team 2 */}
               <div>
-                <p className="text-sm font-medium text-gray-900 mb-1.5">
-                  {scoreModal.team2Players
-                    .map((p) => p.name)
-                    .join(" / ")}
-                </p>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 text-sm mb-3">
+                  {scoreModal.team2Players.map((p, i) => (
+                    <span key={p.id} className="flex items-center gap-1">
+                      {i > 0 && <span className="text-gray-400">/</span>}
+                      <span className="font-semibold text-gray-900 uppercase">
+                        {p.name}
+                      </span>
+                    </span>
+                  ))}
+                </div>
+                <div className="flex items-center gap-3 border-b-2 border-green-500 pb-2">
                   <span className="text-sm text-gray-500">Score</span>
-                  <span className="w-16 rounded border border-gray-200 bg-gray-50 px-2 py-1.5 text-center text-lg font-bold text-gray-500">
-                    {5 - team1Score}
-                  </span>
+                  <input
+                    type="number"
+                    min={0}
+                    max={5}
+                    value={5 - team1Score}
+                    onChange={(e) => {
+                      const val = Math.min(5, Math.max(0, parseInt(e.target.value) || 0));
+                      setTeam1Score(5 - val);
+                    }}
+                    className="w-12 bg-transparent text-lg font-bold text-gray-900 outline-none"
+                  />
                 </div>
               </div>
 
-              <Button
-                className="w-full"
+              <button
                 onClick={handleRecordScores}
                 disabled={saving}
+                className="w-full rounded-lg bg-blue-600 py-3.5 text-base font-bold text-white hover:bg-blue-700 transition-colors disabled:opacity-50 cursor-pointer"
               >
                 {saving ? "Saving..." : "SAVE"}
-              </Button>
+              </button>
             </div>
           </div>
         </div>

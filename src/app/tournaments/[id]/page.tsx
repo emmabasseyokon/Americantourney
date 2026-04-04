@@ -25,8 +25,8 @@ import {
   Copy,
   Shuffle,
   X,
+  MoreVertical,
 } from "lucide-react";
-import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -346,7 +346,7 @@ export default function TournamentDetailPage() {
             .from("matches")
             .insert({
               round_id: round.id,
-              court_number: matchDraw.courtNumber,
+              court_number: 0,
               team1_score: 0,
               team2_score: 0,
               status: "pending",
@@ -393,6 +393,35 @@ export default function TournamentDetailPage() {
       );
     } finally {
       setGenerating(false);
+    }
+  }
+
+  async function handleUpdateMatch(matchId: string, updates: Partial<Match>) {
+    await supabase.from("matches").update(updates).eq("id", matchId);
+
+    // Update local matchup data
+    setMatchupData((prev) =>
+      prev.map((rd) => ({
+        ...rd,
+        matches: rd.matches.map((m) =>
+          m.id === matchId ? { ...m, ...updates } : m
+        ),
+      }))
+    );
+
+    // Check if all matches in the round are completed
+    if (updates.status === "completed") {
+      for (const rd of matchupData) {
+        const allDone = rd.matches.every((m) =>
+          m.id === matchId ? true : m.status === "completed"
+        );
+        if (allDone) {
+          await supabase
+            .from("rounds")
+            .update({ status: "completed" })
+            .eq("id", rd.round.id);
+        }
+      }
     }
   }
 
@@ -475,7 +504,7 @@ export default function TournamentDetailPage() {
             generating={generating}
             genError={genError}
             onGenerate={handleGenerateAllRounds}
-            tournamentId={tournamentId}
+            onUpdateMatch={handleUpdateMatch}
           />
         )}
 
@@ -706,6 +735,37 @@ function PlayersTab({
   );
 }
 
+/* ─── Court options ─── */
+const COURT_OPTIONS = [
+  { value: 1, label: "Court 1" },
+  { value: 2, label: "Court 2" },
+  { value: 3, label: "Court 3" },
+  { value: 4, label: "Court 4" },
+  { value: 5, label: "Court 5" },
+  { value: 6, label: "Court 6" },
+  { value: 7, label: "Court 7" },
+  { value: 8, label: "Centre Court" },
+];
+
+function getCourtLabel(match: Match): string {
+  if (match.court_name) return match.court_name;
+  if (match.court_number > 0 && match.court_number <= 7) return `Court ${match.court_number}`;
+  if (match.court_number === 8) return "Centre Court";
+  return "";
+}
+
+function getStatusLabel(status: string): string {
+  if (status === "pending") return "Ready";
+  if (status === "in_progress") return "In Progress";
+  return "Completed";
+}
+
+function getStatusColor(status: string): string {
+  if (status === "pending") return "text-blue-500";
+  if (status === "in_progress") return "text-orange-500";
+  return "text-green-500";
+}
+
 /* ─── Matchups Tab ─── */
 function MatchupsTab({
   tournament,
@@ -715,7 +775,7 @@ function MatchupsTab({
   generating,
   genError,
   onGenerate,
-  tournamentId,
+  onUpdateMatch,
 }: {
   tournament: Tournament;
   rounds: Round[];
@@ -727,9 +787,16 @@ function MatchupsTab({
   generating: boolean;
   genError: string;
   onGenerate: () => void;
-  tournamentId: string;
+  onUpdateMatch: (matchId: string, updates: Partial<Match>) => Promise<void>;
 }) {
   const [activeRound, setActiveRound] = useState(1);
+  const [menuOpen, setMenuOpen] = useState<string | null>(null);
+  const [courtPickerMatch, setCourtPickerMatch] = useState<string | null>(null);
+  const [scoreModal, setScoreModal] = useState<
+    (Match & { team1Players: Player[]; team2Players: Player[] }) | null
+  >(null);
+  const [team1Score, setTeam1Score] = useState(0);
+  const [saving, setSaving] = useState(false);
 
   const roundTabs = Array.from(
     { length: tournament.total_rounds },
@@ -739,6 +806,47 @@ function MatchupsTab({
   const currentRoundData = matchupData.find(
     (d) => d.round.round_number === activeRound
   );
+
+  // Get courts already in use for this round (to show which are taken)
+  const usedCourts = new Set(
+    (currentRoundData?.matches ?? [])
+      .filter((m) => m.court_number > 0 && m.status !== "pending")
+      .map((m) => m.court_number)
+  );
+
+  async function handleStartMatch(matchId: string, courtValue: number) {
+    const courtLabel = COURT_OPTIONS.find((c) => c.value === courtValue)?.label ?? null;
+    await onUpdateMatch(matchId, {
+      court_number: courtValue,
+      court_name: courtLabel,
+      status: "in_progress",
+    });
+    setCourtPickerMatch(null);
+    setMenuOpen(null);
+  }
+
+  async function handleClearCourt(matchId: string) {
+    await onUpdateMatch(matchId, {
+      court_number: 0,
+      court_name: null,
+      status: "pending",
+    });
+    setMenuOpen(null);
+  }
+
+  async function handleRecordScores() {
+    if (!scoreModal) return;
+    setSaving(true);
+    const team2Score = 5 - team1Score;
+    await onUpdateMatch(scoreModal.id, {
+      team1_score: team1Score,
+      team2_score: team2Score,
+      status: "completed",
+    });
+    setSaving(false);
+    setScoreModal(null);
+    setMenuOpen(null);
+  }
 
   // No rounds generated yet — show generate button
   if (rounds.length === 0) {
@@ -791,46 +899,89 @@ function MatchupsTab({
 
       {/* Match Cards */}
       <div className="p-4">
-        {currentRoundData && (
-          <div className="flex items-center justify-between mb-3">
-            <span
-              className={`text-xs font-semibold uppercase ${
-                currentRoundData.round.status === "completed"
-                  ? "text-green-600"
-                  : "text-gray-400"
-              }`}
-            >
-              {currentRoundData.round.status.replace("_", " ")}
-            </span>
-            <Link
-              href={`/tournaments/${tournamentId}/rounds/${activeRound}`}
-              className="text-xs text-blue-600 hover:text-blue-700 font-medium"
-            >
-              Enter Scores &rarr;
-            </Link>
-          </div>
-        )}
-
         <div className="grid gap-4 sm:grid-cols-2">
           {currentRoundData?.matches.map((match) => (
             <div
               key={match.id}
-              className="rounded-xl border border-gray-100 bg-white p-4 shadow-md"
+              className="relative rounded-xl border border-gray-100 bg-white p-4 shadow-md"
             >
-              {/* Card Header */}
+              {/* Card Header — status left, court center-ish, 3-dot right */}
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-semibold uppercase text-gray-400 tracking-wide">
-                  Court {match.court_number}
-                </span>
                 <span
-                  className={`text-xs font-semibold uppercase ${
-                    match.status === "completed"
-                      ? "text-green-500"
-                      : "text-gray-400"
-                  }`}
+                  className={`text-xs font-semibold uppercase tracking-wide ${getStatusColor(match.status)}`}
                 >
-                  {match.status === "completed" ? "Completed" : "Pending"}
+                  {getStatusLabel(match.status)}
                 </span>
+                {match.court_number > 0 && (
+                  <span className="text-xs font-medium text-gray-500">
+                    {getCourtLabel(match)}
+                  </span>
+                )}
+                <div className="relative">
+                  <button
+                    onClick={() =>
+                      setMenuOpen(menuOpen === match.id ? null : match.id)
+                    }
+                    className="p-1 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                  </button>
+
+                  {/* Kebab Menu */}
+                  {menuOpen === match.id && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-30"
+                        onClick={() => setMenuOpen(null)}
+                      />
+                      <div className="absolute right-0 top-8 z-40 w-44 rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
+                        {match.status === "pending" && (
+                          <button
+                            onClick={() => {
+                              setCourtPickerMatch(match.id);
+                              setMenuOpen(null);
+                            }}
+                            className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                          >
+                            Start Match
+                          </button>
+                        )}
+                        {match.status === "in_progress" && (
+                          <>
+                            <button
+                              onClick={() => handleClearCourt(match.id)}
+                              className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                            >
+                              Clear Court
+                            </button>
+                            <button
+                              onClick={() => {
+                                setScoreModal(match);
+                                setTeam1Score(match.team1_score || 0);
+                                setMenuOpen(null);
+                              }}
+                              className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                            >
+                              Record Scores
+                            </button>
+                          </>
+                        )}
+                        {match.status === "completed" && (
+                          <button
+                            onClick={() => {
+                              setScoreModal(match);
+                              setTeam1Score(match.team1_score);
+                              setMenuOpen(null);
+                            }}
+                            className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                          >
+                            Edit Scores
+                          </button>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
 
               {/* Team 1 */}
@@ -850,14 +1001,9 @@ function MatchupsTab({
                 <div className="flex items-center gap-1 text-sm">
                   {match.team1Players.map((p, i) => (
                     <span key={p.id} className="flex items-center gap-1">
-                      {i > 0 && (
-                        <span className="text-gray-400">/</span>
-                      )}
+                      {i > 0 && <span className="text-gray-400">/</span>}
                       <span className="font-semibold text-gray-900 uppercase">
                         {p.name}
-                      </span>
-                      <span className="font-bold text-gray-500 text-xs">
-                        {p.classification}
                       </span>
                     </span>
                   ))}
@@ -881,14 +1027,9 @@ function MatchupsTab({
                 <div className="flex items-center gap-1 text-sm">
                   {match.team2Players.map((p, i) => (
                     <span key={p.id} className="flex items-center gap-1">
-                      {i > 0 && (
-                        <span className="text-gray-400">/</span>
-                      )}
+                      {i > 0 && <span className="text-gray-400">/</span>}
                       <span className="font-semibold text-gray-900 uppercase">
                         {p.name}
-                      </span>
-                      <span className="font-bold text-gray-500 text-xs">
-                        {p.classification}
                       </span>
                     </span>
                   ))}
@@ -904,6 +1045,115 @@ function MatchupsTab({
           </div>
         )}
       </div>
+
+      {/* Court Picker Modal */}
+      {courtPickerMatch && (
+        <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-black/40">
+          <div className="w-full max-w-sm rounded-t-2xl sm:rounded-2xl bg-white shadow-xl">
+            <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4">
+              <h2 className="text-base font-bold text-gray-900">
+                Select venue for match
+              </h2>
+              <button
+                onClick={() => setCourtPickerMatch(null)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="py-2">
+              {COURT_OPTIONS.map((court) => {
+                const inUse = usedCourts.has(court.value);
+                return (
+                  <button
+                    key={court.value}
+                    disabled={inUse}
+                    onClick={() =>
+                      handleStartMatch(courtPickerMatch, court.value)
+                    }
+                    className={`flex w-full items-center justify-between px-5 py-3.5 text-sm transition-colors cursor-pointer ${
+                      inUse
+                        ? "text-gray-300 cursor-not-allowed"
+                        : "text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    <span>{court.label}</span>
+                    {inUse && (
+                      <span className="text-xs text-gray-300">In use</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Record Scores Modal */}
+      {scoreModal && (
+        <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-black/40">
+          <div className="w-full max-w-sm rounded-t-2xl sm:rounded-2xl bg-white shadow-xl">
+            <div className="flex items-center justify-between bg-blue-600 px-5 py-4 rounded-t-2xl sm:rounded-t-2xl">
+              <h2 className="text-base font-bold text-white">
+                Record scores
+              </h2>
+              <button
+                onClick={() => setScoreModal(null)}
+                className="text-white/80 hover:text-white"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="p-5 space-y-4">
+              {/* Team 1 */}
+              <div>
+                <p className="text-sm font-medium text-gray-900 mb-1.5">
+                  {scoreModal.team1Players
+                    .map((p) => p.name)
+                    .join(" / ")}
+                </p>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-500">Score</span>
+                  <select
+                    value={team1Score}
+                    onChange={(e) => setTeam1Score(parseInt(e.target.value))}
+                    className="w-16 rounded border border-gray-300 bg-white px-2 py-1.5 text-center text-lg font-bold text-gray-900"
+                  >
+                    {[0, 1, 2, 3, 4, 5].map((n) => (
+                      <option key={n} value={n}>
+                        {n}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Team 2 */}
+              <div>
+                <p className="text-sm font-medium text-gray-900 mb-1.5">
+                  {scoreModal.team2Players
+                    .map((p) => p.name)
+                    .join(" / ")}
+                </p>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-500">Score</span>
+                  <span className="w-16 rounded border border-gray-200 bg-gray-50 px-2 py-1.5 text-center text-lg font-bold text-gray-500">
+                    {5 - team1Score}
+                  </span>
+                </div>
+              </div>
+
+              <Button
+                className="w-full"
+                onClick={handleRecordScores}
+                disabled={saving}
+              >
+                {saving ? "Saving..." : "SAVE"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

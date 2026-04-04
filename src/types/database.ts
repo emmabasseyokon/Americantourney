@@ -48,6 +48,7 @@ export interface Match {
   id: string;
   round_id: string;
   court_number: number;
+  court_name: string | null;
   team1_score: number;
   team2_score: number;
   status: MatchStatus;

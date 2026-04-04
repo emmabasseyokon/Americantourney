@@ -26,6 +26,17 @@ function pairKey(a: string, b: string): string {
 }
 
 /**
+ * Check if two classifications are forbidden from pairing as teammates.
+ * Rules: same classification cannot pair, and A+ cannot pair with A.
+ */
+function isForbiddenPairing(c1: string, c2: string): boolean {
+  if (c1 === c2) return true;
+  const sorted = [c1, c2].sort();
+  if (sorted[0] === "A" && sorted[1] === "A+") return true;
+  return false;
+}
+
+/**
  * Generate teams with constraints:
  * 1. Two females CANNOT pair together
  * 2. Same classification should not pair (relaxed if unavoidable)
@@ -57,7 +68,7 @@ function generateTeams(
     // Priority 1: different classification + not a repeat pair
     for (const male of males) {
       if (paired.has(male.id)) continue;
-      if (male.classification === female.classification) continue;
+      if (isForbiddenPairing(male.classification, female.classification)) continue;
       if (usedPairs.has(pairKey(male.id, female.id))) continue;
       bestMatch = male;
       break;
@@ -67,7 +78,7 @@ function generateTeams(
     if (!bestMatch) {
       for (const male of males) {
         if (paired.has(male.id)) continue;
-        if (male.classification === female.classification) continue;
+        if (isForbiddenPairing(male.classification, female.classification)) continue;
         bestMatch = male;
         break;
       }
@@ -111,7 +122,7 @@ function generateTeams(
     for (let j = i + 1; j < remainingMales.length; j++) {
       if (usedRemaining.has(j)) continue;
       const player2 = remainingMales[j];
-      if (player2.classification === player1.classification) continue;
+      if (isForbiddenPairing(player2.classification, player1.classification)) continue;
       if (usedPairs.has(pairKey(player1.id, player2.id))) continue;
       foundIdx = j;
       break;
@@ -121,7 +132,7 @@ function generateTeams(
     if (foundIdx === -1) {
       for (let j = i + 1; j < remainingMales.length; j++) {
         if (usedRemaining.has(j)) continue;
-        if (remainingMales[j].classification === player1.classification) continue;
+        if (isForbiddenPairing(remainingMales[j].classification, player1.classification)) continue;
         foundIdx = j;
         break;
       }

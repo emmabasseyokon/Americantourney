@@ -662,7 +662,7 @@ function PlayersTab({
       )}
 
       {/* Table Header */}
-      <div className="grid grid-cols-[2.5rem_1fr_4rem_5rem_3.5rem] sm:grid-cols-[4rem_1fr_8rem_8rem_5rem] items-center border-b border-gray-200 px-4 py-2 text-xs font-medium uppercase tracking-wider text-gray-400">
+      <div className="grid grid-cols-[2.5rem_1fr_4rem_5rem_3.5rem] sm:grid-cols-[3rem_2fr_1fr_1fr_4rem] items-center border-b border-gray-200 px-4 py-2 text-xs font-medium uppercase tracking-wider text-gray-400">
         <span>No.</span>
         <span>Name</span>
         <span>Class</span>
@@ -674,7 +674,7 @@ function PlayersTab({
       {players.map((player, index) => (
         <div
           key={player.id}
-          className="grid grid-cols-[2.5rem_1fr_4rem_5rem_3.5rem] sm:grid-cols-[4rem_1fr_8rem_8rem_5rem] items-center border-b border-gray-100 px-4 py-4"
+          className="grid grid-cols-[2.5rem_1fr_4rem_5rem_3.5rem] sm:grid-cols-[3rem_2fr_1fr_1fr_4rem] items-center border-b border-gray-100 px-4 py-4"
         >
           <span className="text-sm text-gray-400">{index + 1}</span>
           <span className="text-sm font-semibold text-gray-900 uppercase">

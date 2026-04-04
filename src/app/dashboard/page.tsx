@@ -219,8 +219,8 @@ export default function DashboardPage() {
 
       {/* Edit Tournament Modal */}
       {editingTournament && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-md rounded-lg bg-white shadow-xl overflow-hidden">
+        <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-black/40">
+          <div className="w-full max-w-md rounded-t-2xl sm:rounded-lg bg-white shadow-xl overflow-hidden">
             <div className="flex items-center justify-between bg-blue-600 px-5 py-4">
               <h2 className="text-base font-bold text-white">Edit tournament</h2>
               <button
@@ -288,8 +288,8 @@ export default function DashboardPage() {
 
       {/* Delete Confirmation Modal */}
       {deletingTournament && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-sm rounded-lg bg-white p-6 shadow-xl">
+        <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-black/40">
+          <div className="w-full max-w-sm rounded-t-2xl sm:rounded-lg bg-white p-6 shadow-xl">
             <h2 className="text-lg font-bold text-gray-900">Delete tournament?</h2>
             <p className="mt-2 text-sm text-gray-500">
               Are you sure you want to delete <strong>{deletingTournament.name}</strong>? This action cannot be undone.
@@ -315,8 +315,8 @@ export default function DashboardPage() {
 
       {/* Add Tournament Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-md rounded-lg bg-white shadow-xl overflow-hidden">
+        <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-black/40">
+          <div className="w-full max-w-md rounded-t-2xl sm:rounded-lg bg-white shadow-xl overflow-hidden">
             {/* Modal Header */}
             <div className="flex items-center justify-between bg-blue-600 px-5 py-4">
               <h2 className="text-base font-bold text-white">Add tournament</h2>

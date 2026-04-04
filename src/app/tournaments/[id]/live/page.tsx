@@ -324,6 +324,26 @@ function LivePlayersTab({ players }: { players: Player[] }) {
   );
 }
 
+/* ─── Status helpers ─── */
+function getCourtLabel(match: Match): string {
+  if (match.court_name) return match.court_name;
+  if (match.court_number > 0 && match.court_number <= 7) return `Court ${match.court_number}`;
+  if (match.court_number === 8) return "Centre Court";
+  return "";
+}
+
+function getStatusLabel(status: string): string {
+  if (status === "pending") return "Ready";
+  if (status === "in_progress") return "In Progress";
+  return "Completed";
+}
+
+function getStatusColor(status: string): string {
+  if (status === "pending") return "text-blue-500";
+  if (status === "in_progress") return "text-orange-500";
+  return "text-green-500";
+}
+
 /* ─── Matchups Tab ─── */
 function LiveMatchupsTab({
   tournament,
@@ -347,6 +367,40 @@ function LiveMatchupsTab({
   const currentRoundData = matchupData.find(
     (d) => d.round.round_number === activeRound
   );
+
+  // Build map: player ID → court tag for players in_progress in OTHER rounds
+  const playerActiveCourt = new Map<string, string>();
+  for (const rd of matchupData) {
+    if (rd.round.round_number === activeRound) continue;
+    for (const m of rd.matches) {
+      if (m.status !== "in_progress" || m.court_number === 0) continue;
+      const courtTag = m.court_number === 8 ? "CC" : `C${m.court_number}`;
+      for (const p of [...m.team1Players, ...m.team2Players]) {
+        playerActiveCourt.set(p.id, courtTag);
+      }
+    }
+  }
+
+  // Players whose previous-round match is NOT completed
+  const playerNotReady = new Set<string>();
+  for (const rd of matchupData) {
+    if (rd.round.round_number >= activeRound) continue;
+    for (const m of rd.matches) {
+      if (m.status === "completed") continue;
+      for (const p of [...m.team1Players, ...m.team2Players]) {
+        playerNotReady.add(p.id);
+      }
+    }
+  }
+
+  function isMatchNotReady(
+    match: Match & { team1Players: Player[]; team2Players: Player[] }
+  ): boolean {
+    if (match.status !== "pending") return false;
+    return [...match.team1Players, ...match.team2Players].some((p) =>
+      playerNotReady.has(p.id)
+    );
+  }
 
   if (rounds.length === 0) {
     return (
@@ -377,7 +431,7 @@ function LiveMatchupsTab({
         ))}
       </div>
 
-      {/* Match Cards — no classification shown */}
+      {/* Match Cards */}
       <div className="p-4">
         <div className="grid gap-4 sm:grid-cols-2">
           {currentRoundData?.matches.map((match) => (
@@ -385,19 +439,24 @@ function LiveMatchupsTab({
               key={match.id}
               className="rounded-xl border border-gray-100 bg-white p-4 shadow-md"
             >
+              {/* Card Header — status left, court right */}
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-semibold uppercase text-gray-400 tracking-wide">
-                  Court {match.court_number}
-                </span>
                 <span
-                  className={`text-xs font-semibold uppercase ${
-                    match.status === "completed"
-                      ? "text-green-500"
-                      : "text-gray-400"
+                  className={`text-xs font-semibold uppercase tracking-wide ${
+                    isMatchNotReady(match)
+                      ? "text-red-500"
+                      : getStatusColor(match.status)
                   }`}
                 >
-                  {match.status === "completed" ? "Completed" : "Pending"}
+                  {isMatchNotReady(match)
+                    ? "Not Ready"
+                    : getStatusLabel(match.status)}
                 </span>
+                {match.court_number > 0 && (
+                  <span className="text-xs font-medium text-gray-500">
+                    {getCourtLabel(match)}
+                  </span>
+                )}
               </div>
 
               {/* Team 1 */}
@@ -412,7 +471,7 @@ function LiveMatchupsTab({
                         : "bg-gray-300"
                   }`}
                 >
-                  {match.status === "completed" ? match.team1_score : "-"}
+                  {match.status === "completed" ? match.team1_score : match.status === "in_progress" ? match.team1_score : "0"}
                 </span>
                 <div className="flex items-center gap-1 text-sm">
                   {match.team1Players.map((p, i) => (
@@ -421,6 +480,11 @@ function LiveMatchupsTab({
                       <span className="font-semibold text-gray-900 uppercase">
                         {p.name}
                       </span>
+                      {playerActiveCourt.has(p.id) && (
+                        <span className="rounded bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white leading-none">
+                          {playerActiveCourt.get(p.id)}
+                        </span>
+                      )}
                     </span>
                   ))}
                 </div>
@@ -438,7 +502,7 @@ function LiveMatchupsTab({
                         : "bg-gray-300"
                   }`}
                 >
-                  {match.status === "completed" ? match.team2_score : "-"}
+                  {match.status === "completed" ? match.team2_score : match.status === "in_progress" ? match.team2_score : "0"}
                 </span>
                 <div className="flex items-center gap-1 text-sm">
                   {match.team2Players.map((p, i) => (
@@ -447,6 +511,11 @@ function LiveMatchupsTab({
                       <span className="font-semibold text-gray-900 uppercase">
                         {p.name}
                       </span>
+                      {playerActiveCourt.has(p.id) && (
+                        <span className="rounded bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white leading-none">
+                          {playerActiveCourt.get(p.id)}
+                        </span>
+                      )}
                     </span>
                   ))}
                 </div>

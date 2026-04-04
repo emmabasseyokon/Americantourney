@@ -814,6 +814,45 @@ function MatchupsTab({
       .map((m) => m.court_number)
   );
 
+  // Build map: player ID → court label for players currently in_progress in OTHER rounds
+  // This is used to show court badges on future rounds (e.g. "C1" next to a player's name)
+  const playerActiveCourt = new Map<string, string>();
+  for (const rd of matchupData) {
+    if (rd.round.round_number === activeRound) continue;
+    for (const m of rd.matches) {
+      if (m.status !== "in_progress" || m.court_number === 0) continue;
+      const courtTag =
+        m.court_number === 8
+          ? "CC"
+          : `C${m.court_number}`;
+      for (const p of [...m.team1Players, ...m.team2Players]) {
+        playerActiveCourt.set(p.id, courtTag);
+      }
+    }
+  }
+
+  // Build set of player IDs whose previous-round match is NOT completed
+  const playerNotReady = new Set<string>();
+  for (const rd of matchupData) {
+    if (rd.round.round_number >= activeRound) continue;
+    for (const m of rd.matches) {
+      if (m.status === "completed") continue;
+      for (const p of [...m.team1Players, ...m.team2Players]) {
+        playerNotReady.add(p.id);
+      }
+    }
+  }
+
+  // A match is "not ready" if any of its players are still busy in a previous round
+  function isMatchNotReady(
+    match: Match & { team1Players: Player[]; team2Players: Player[] }
+  ): boolean {
+    if (match.status !== "pending") return false;
+    return [...match.team1Players, ...match.team2Players].some((p) =>
+      playerNotReady.has(p.id)
+    );
+  }
+
   async function handleStartMatch(matchId: string, courtValue: number) {
     const courtLabel = COURT_OPTIONS.find((c) => c.value === courtValue)?.label ?? null;
     await onUpdateMatch(matchId, {
@@ -908,9 +947,15 @@ function MatchupsTab({
               {/* Card Header — status left, court center-ish, 3-dot right */}
               <div className="flex items-center justify-between mb-3">
                 <span
-                  className={`text-xs font-semibold uppercase tracking-wide ${getStatusColor(match.status)}`}
+                  className={`text-xs font-semibold uppercase tracking-wide ${
+                    isMatchNotReady(match)
+                      ? "text-red-500"
+                      : getStatusColor(match.status)
+                  }`}
                 >
-                  {getStatusLabel(match.status)}
+                  {isMatchNotReady(match)
+                    ? "Not Ready"
+                    : getStatusLabel(match.status)}
                 </span>
                 {match.court_number > 0 && (
                   <span className="text-xs font-medium text-gray-500">
@@ -935,7 +980,7 @@ function MatchupsTab({
                         onClick={() => setMenuOpen(null)}
                       />
                       <div className="absolute right-0 top-8 z-40 w-44 rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
-                        {match.status === "pending" && (
+                        {match.status === "pending" && !isMatchNotReady(match) && (
                           <button
                             onClick={() => {
                               setCourtPickerMatch(match.id);
@@ -945,6 +990,11 @@ function MatchupsTab({
                           >
                             Start Match
                           </button>
+                        )}
+                        {match.status === "pending" && isMatchNotReady(match) && (
+                          <span className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-gray-300">
+                            Start Match
+                          </span>
                         )}
                         {match.status === "in_progress" && (
                           <>
@@ -996,7 +1046,7 @@ function MatchupsTab({
                         : "bg-gray-300"
                   }`}
                 >
-                  {match.status === "completed" ? match.team1_score : "-"}
+                  {match.status === "completed" ? match.team1_score : match.status === "in_progress" ? match.team1_score : "0"}
                 </span>
                 <div className="flex items-center gap-1 text-sm">
                   {match.team1Players.map((p, i) => (
@@ -1005,6 +1055,11 @@ function MatchupsTab({
                       <span className="font-semibold text-gray-900 uppercase">
                         {p.name}
                       </span>
+                      {playerActiveCourt.has(p.id) && (
+                        <span className="rounded bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white leading-none">
+                          {playerActiveCourt.get(p.id)}
+                        </span>
+                      )}
                     </span>
                   ))}
                 </div>
@@ -1022,7 +1077,7 @@ function MatchupsTab({
                         : "bg-gray-300"
                   }`}
                 >
-                  {match.status === "completed" ? match.team2_score : "-"}
+                  {match.status === "completed" ? match.team2_score : match.status === "in_progress" ? match.team2_score : "0"}
                 </span>
                 <div className="flex items-center gap-1 text-sm">
                   {match.team2Players.map((p, i) => (
@@ -1031,6 +1086,11 @@ function MatchupsTab({
                       <span className="font-semibold text-gray-900 uppercase">
                         {p.name}
                       </span>
+                      {playerActiveCourt.has(p.id) && (
+                        <span className="rounded bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white leading-none">
+                          {playerActiveCourt.get(p.id)}
+                        </span>
+                      )}
                     </span>
                   ))}
                 </div>

@@ -233,55 +233,68 @@ export default function DashboardPage() {
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <form onSubmit={handleEdit} className="p-5 space-y-0">
-              <div className="border-b border-gray-200 py-3">
-                <input
-                  type="text"
-                  placeholder="Tournament name"
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  required
-                  className="w-full text-sm text-gray-900 bg-transparent outline-none placeholder:text-gray-400"
-                />
-              </div>
-              <div className="flex items-center justify-between border-b border-gray-200 py-3">
-                <span className="text-sm text-gray-500">No of players</span>
-                <select
-                  value={editPlayers}
-                  onChange={(e) => setEditPlayers(e.target.value)}
-                  className="text-sm font-medium text-gray-900 bg-transparent outline-none cursor-pointer"
-                >
-                  <option value="8">8 Players</option>
-                  <option value="16">16 Players</option>
-                  <option value="32">32 Players</option>
-                  <option value="64">64 Players</option>
-                </select>
-              </div>
-              <div className="flex items-center justify-between border-b border-gray-200 py-3">
-                <span className="text-sm text-gray-500">No of rounds</span>
-                <select
-                  value={editRounds}
-                  onChange={(e) => setEditRounds(e.target.value)}
-                  className="text-sm font-medium text-gray-900 bg-transparent outline-none cursor-pointer"
-                >
-                  <option value="3">3 Rounds</option>
-                  <option value="4">4 Rounds</option>
-                  <option value="5">5 Rounds</option>
-                </select>
-              </div>
-              {editError && (
-                <p className="pt-3 text-sm text-red-600">{editError}</p>
-              )}
-              <div className="pt-4">
-                <Button
-                  type="submit"
-                  className="w-full bg-blue-500 hover:bg-blue-600"
-                  disabled={editSaving}
-                >
-                  {editSaving ? "Saving..." : "SAVE"}
-                </Button>
-              </div>
-            </form>
+            {(() => {
+              const locked = editingTournament.status === "in_progress" || editingTournament.status === "completed";
+              return (
+                <form onSubmit={handleEdit} className="p-5 space-y-0">
+                  {locked && (
+                    <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-700 mb-3">
+                      Draws have been locked. Tournament details cannot be edited.
+                    </div>
+                  )}
+                  <div className="border-b border-gray-200 py-3">
+                    <input
+                      type="text"
+                      placeholder="Tournament name"
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      required
+                      disabled={locked}
+                      className={`w-full text-sm bg-transparent outline-none placeholder:text-gray-400 ${locked ? "text-gray-400" : "text-gray-900"}`}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between border-b border-gray-200 py-3">
+                    <span className="text-sm text-gray-500">No of players</span>
+                    <select
+                      value={editPlayers}
+                      onChange={(e) => setEditPlayers(e.target.value)}
+                      disabled={locked}
+                      className={`text-sm font-medium bg-transparent outline-none ${locked ? "text-gray-400" : "text-gray-900 cursor-pointer"}`}
+                    >
+                      <option value="8">8 Players</option>
+                      <option value="16">16 Players</option>
+                      <option value="32">32 Players</option>
+                      <option value="64">64 Players</option>
+                    </select>
+                  </div>
+                  <div className="flex items-center justify-between border-b border-gray-200 py-3">
+                    <span className="text-sm text-gray-500">No of rounds</span>
+                    <select
+                      value={editRounds}
+                      onChange={(e) => setEditRounds(e.target.value)}
+                      disabled={locked}
+                      className={`text-sm font-medium bg-transparent outline-none ${locked ? "text-gray-400" : "text-gray-900 cursor-pointer"}`}
+                    >
+                      <option value="3">3 Rounds</option>
+                      <option value="4">4 Rounds</option>
+                      <option value="5">5 Rounds</option>
+                    </select>
+                  </div>
+                  {editError && (
+                    <p className="pt-3 text-sm text-red-600">{editError}</p>
+                  )}
+                  <div className="pt-4">
+                    <Button
+                      type="submit"
+                      className="w-full bg-blue-500 hover:bg-blue-600"
+                      disabled={editSaving || locked}
+                    >
+                      {editSaving ? "Saving..." : "SAVE"}
+                    </Button>
+                  </div>
+                </form>
+              );
+            })()}
           </div>
         </div>
       )}

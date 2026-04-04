@@ -1,6 +1,7 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
+import { SkeletonList } from "@/components/ui/Skeleton";
 import type { Tournament, Round } from "@/types/database";
 import { Trophy, BarChart3 } from "lucide-react";
 import Link from "next/link";
@@ -34,11 +35,7 @@ export default function LiveTournamentPage() {
   }, []);
 
   if (loading || !tournament) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <p className="text-gray-500">Loading...</p>
-      </div>
-    );
+    return <SkeletonList rows={5} />;
   }
 
   return (

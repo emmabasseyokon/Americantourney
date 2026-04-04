@@ -13,6 +13,7 @@ import type {
   Classification,
   Gender,
 } from "@/types/database";
+import { SkeletonList } from "@/components/ui/Skeleton";
 import {
   ClipboardList,
   Swords,
@@ -404,8 +405,12 @@ export default function TournamentDetailPage() {
 
   if (loading || !tournament) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <p className="text-gray-500">Loading...</p>
+      <div className="flex flex-col h-[calc(100vh-3.5rem)] bg-white">
+        <div className="border-b border-gray-200 bg-white px-4 py-3">
+          <div className="h-5 w-40 animate-pulse rounded bg-gray-100" />
+          <div className="mt-1 h-3 w-28 animate-pulse rounded bg-gray-100" />
+        </div>
+        <SkeletonList rows={6} />
       </div>
     );
   }

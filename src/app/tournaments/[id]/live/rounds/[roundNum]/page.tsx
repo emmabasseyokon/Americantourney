@@ -1,6 +1,7 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
+import { SkeletonCards } from "@/components/ui/Skeleton";
 import type { Player, Match } from "@/types/database";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
@@ -88,11 +89,7 @@ export default function LiveRoundPage() {
   }, [roundNum]);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <p className="text-gray-500">Loading...</p>
-      </div>
-    );
+    return <SkeletonCards count={4} />;
   }
 
   return (

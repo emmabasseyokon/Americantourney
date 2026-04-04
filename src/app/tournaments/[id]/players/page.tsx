@@ -6,6 +6,7 @@ import { Select } from "@/components/ui/Select";
 import { Badge } from "@/components/ui/Badge";
 import { useSupabase } from "@/components/providers/SupabaseProvider";
 import type { Tournament, Player, Classification, Gender } from "@/types/database";
+import { SkeletonList } from "@/components/ui/Skeleton";
 import { Trash2 } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -80,11 +81,7 @@ export default function PlayersPage() {
   }
 
   if (!tournament) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <p className="text-gray-500">Loading...</p>
-      </div>
-    );
+    return <SkeletonList rows={6} />;
   }
 
   const isFull = players.length >= tournament.max_players;

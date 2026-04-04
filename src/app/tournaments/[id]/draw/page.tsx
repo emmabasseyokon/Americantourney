@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/Button";
 import { useSupabase } from "@/components/providers/SupabaseProvider";
 import { generateRoundDraw, extractPairKeys } from "@/lib/draw/americano";
 import type { Tournament, Player, Round, Match, MatchPlayer } from "@/types/database";
+import { SkeletonCards } from "@/components/ui/Skeleton";
 import { Shuffle } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -152,11 +153,7 @@ export default function DrawPage() {
   }
 
   if (!tournament) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <p className="text-gray-500">Loading...</p>
-      </div>
-    );
+    return <SkeletonCards count={4} />;
   }
 
   const canGenerate =

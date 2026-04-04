@@ -37,12 +37,6 @@ export function Navbar() {
                 >
                   Dashboard
                 </Link>
-                <Link
-                  href="/tournaments/new"
-                  className="text-sm text-gray-600 hover:text-gray-900"
-                >
-                  New Tournament
-                </Link>
                 <Button variant="ghost" size="sm" onClick={handleLogout}>
                   Logout
                 </Button>
@@ -74,13 +68,6 @@ export function Navbar() {
                   onClick={() => setMenuOpen(false)}
                 >
                   Dashboard
-                </Link>
-                <Link
-                  href="/tournaments/new"
-                  className="block px-2 py-1.5 text-sm text-gray-600 hover:text-gray-900"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  New Tournament
                 </Link>
                 <button
                   onClick={handleLogout}

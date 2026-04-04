@@ -1,6 +1,7 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
+import { SkeletonTable } from "@/components/ui/Skeleton";
 import type { Player, Round, Match } from "@/types/database";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -111,11 +112,7 @@ export default function LiveLeaderboardPage() {
   }, []);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <p className="text-gray-500">Loading...</p>
-      </div>
-    );
+    return <SkeletonTable rows={6} cols={5} />;
   }
 
   const roundColumns = Array.from({ length: totalRounds }, (_, i) => i + 1);

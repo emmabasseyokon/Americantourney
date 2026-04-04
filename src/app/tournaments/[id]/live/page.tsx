@@ -201,8 +201,7 @@ export default function LiveTournamentPage() {
     <div className="flex flex-col h-[calc(100vh-3.5rem)] bg-white">
       {/* Header */}
       <div className="border-b border-gray-200 bg-white px-4 py-3">
-        <div className="mx-auto flex max-w-4xl items-center gap-3">
-          <Trophy className="h-5 w-5 text-blue-600" />
+        <div className="mx-auto max-w-4xl">
           <div>
             <h1 className="text-lg font-bold text-gray-900">
               {tournament.name}
@@ -303,7 +302,7 @@ function LivePlayersTab({ players }: { players: Player[] }) {
   return (
     <div>
       {/* Table Header */}
-      <div className="grid grid-cols-[2.5rem_1fr_5rem] sm:grid-cols-[6rem_3fr_1fr] items-center border-b border-gray-200 px-4 py-2 text-xs font-medium uppercase tracking-wider text-gray-400">
+      <div className="grid grid-cols-[2.5rem_1fr_5rem] sm:grid-cols-[6rem_1.5fr_1fr] items-center border-b border-gray-200 px-4 py-2 text-xs font-medium uppercase tracking-wider text-gray-400">
         <span>No.</span>
         <span>Name</span>
         <span>Gender</span>
@@ -313,7 +312,7 @@ function LivePlayersTab({ players }: { players: Player[] }) {
       {players.map((player, index) => (
         <div
           key={player.id}
-          className="grid grid-cols-[2.5rem_1fr_5rem] sm:grid-cols-[6rem_3fr_1fr] items-center border-b border-gray-100 px-4 py-4"
+          className="grid grid-cols-[2.5rem_1fr_5rem] sm:grid-cols-[6rem_1.5fr_1fr] items-center border-b border-gray-100 px-4 py-4"
         >
           <span className="text-sm text-gray-400">{index + 1}</span>
           <span className="text-sm font-semibold text-gray-900 uppercase">

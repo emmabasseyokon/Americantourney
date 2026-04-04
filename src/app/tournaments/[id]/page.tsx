@@ -878,8 +878,12 @@ function MatchupsTab({
   const [scoreModal, setScoreModal] = useState<
     (Match & { team1Players: Player[]; team2Players: Player[] }) | null
   >(null);
-  const [team1Score, setTeam1Score] = useState(0);
+  const [team1Input, setTeam1Input] = useState("");
+  const [team2Input, setTeam2Input] = useState("");
   const [saving, setSaving] = useState(false);
+
+  const team1Score = team1Input === "" ? null : Math.min(5, Math.max(0, parseInt(team1Input) || 0));
+  const team2Score = team1Score !== null ? 5 - team1Score : (team2Input === "" ? null : Math.min(5, Math.max(0, parseInt(team2Input) || 0)));
 
   const roundTabs = Array.from(
     { length: tournament.total_rounds },
@@ -955,12 +959,12 @@ function MatchupsTab({
   }
 
   async function handleRecordScores() {
-    if (!scoreModal) return;
+    if (!scoreModal || team1Score === null) return;
     setSaving(true);
-    const team2Score = 5 - team1Score;
+    const finalTeam2 = 5 - team1Score;
     await onUpdateMatch(scoreModal.id, {
       team1_score: team1Score,
-      team2_score: team2Score,
+      team2_score: finalTeam2,
       status: "completed",
     });
     setSaving(false);
@@ -1200,7 +1204,8 @@ function MatchupsTab({
                             <button
                               onClick={() => {
                                 setScoreModal(match);
-                                setTeam1Score(match.team1_score || 0);
+                                setTeam1Input("");
+                                setTeam2Input("");
                                 setMenuOpen(null);
                               }}
                               className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
@@ -1213,7 +1218,8 @@ function MatchupsTab({
                           <button
                             onClick={() => {
                               setScoreModal(match);
-                              setTeam1Score(match.team1_score);
+                              setTeam1Input(String(match.team1_score));
+                              setTeam2Input(String(match.team2_score));
                               setMenuOpen(null);
                             }}
                             className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
@@ -1248,6 +1254,9 @@ function MatchupsTab({
                       <span className="font-semibold text-gray-900 uppercase">
                         {p.name}
                       </span>
+                      <span className="font-bold text-gray-500 text-xs">
+                        {p.classification}
+                      </span>
                       {playerActiveCourt.has(p.id) && (
                         <span className="rounded bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white leading-none">
                           {playerActiveCourt.get(p.id)}
@@ -1278,6 +1287,9 @@ function MatchupsTab({
                       {i > 0 && <span className="text-gray-400">/</span>}
                       <span className="font-semibold text-gray-900 uppercase">
                         {p.name}
+                      </span>
+                      <span className="font-bold text-gray-500 text-xs">
+                        {p.classification}
                       </span>
                       {playerActiveCourt.has(p.id) && (
                         <span className="rounded bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white leading-none">
@@ -1375,14 +1387,20 @@ function MatchupsTab({
                 <div className="flex items-center gap-3 border-b-2 border-green-500 pb-2">
                   <span className="text-sm text-gray-500">Score</span>
                   <input
-                    type="number"
-                    min={0}
-                    max={5}
-                    value={team1Score}
+                    type="text"
+                    inputMode="numeric"
+                    value={team1Input}
+                    onFocus={(e) => e.target.select()}
                     onChange={(e) => {
-                      const val = Math.min(5, Math.max(0, parseInt(e.target.value) || 0));
-                      setTeam1Score(val);
+                      const raw = e.target.value.replace(/[^0-5]/g, "").slice(-1);
+                      setTeam1Input(raw);
+                      if (raw !== "") {
+                        setTeam2Input(String(5 - parseInt(raw)));
+                      } else {
+                        setTeam2Input("");
+                      }
                     }}
+                    placeholder="0"
                     className="w-12 bg-transparent text-lg font-bold text-gray-900 outline-none"
                   />
                 </div>
@@ -1403,14 +1421,20 @@ function MatchupsTab({
                 <div className="flex items-center gap-3 border-b-2 border-green-500 pb-2">
                   <span className="text-sm text-gray-500">Score</span>
                   <input
-                    type="number"
-                    min={0}
-                    max={5}
-                    value={5 - team1Score}
+                    type="text"
+                    inputMode="numeric"
+                    value={team2Input}
+                    onFocus={(e) => e.target.select()}
                     onChange={(e) => {
-                      const val = Math.min(5, Math.max(0, parseInt(e.target.value) || 0));
-                      setTeam1Score(5 - val);
+                      const raw = e.target.value.replace(/[^0-5]/g, "").slice(-1);
+                      setTeam2Input(raw);
+                      if (raw !== "") {
+                        setTeam1Input(String(5 - parseInt(raw)));
+                      } else {
+                        setTeam1Input("");
+                      }
                     }}
+                    placeholder="0"
                     className="w-12 bg-transparent text-lg font-bold text-gray-900 outline-none"
                   />
                 </div>
@@ -1418,7 +1442,7 @@ function MatchupsTab({
 
               <button
                 onClick={handleRecordScores}
-                disabled={saving}
+                disabled={saving || team1Score === null}
                 className="w-full rounded-lg bg-blue-600 py-3.5 text-base font-bold text-white hover:bg-blue-700 transition-colors disabled:opacity-50 cursor-pointer"
               >
                 {saving ? "Saving..." : "SAVE"}

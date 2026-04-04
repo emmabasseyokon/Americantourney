@@ -19,6 +19,7 @@ import {
   BarChart3,
   UserPlus,
   Trash2,
+  Pencil,
   Share2,
   Copy,
   Shuffle,
@@ -42,8 +43,9 @@ export default function TournamentDetailPage() {
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
 
-  // Add player state
+  // Add/edit player state
   const [showAddPlayer, setShowAddPlayer] = useState(false);
+  const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const [playerName, setPlayerName] = useState("");
   const [playerGender, setPlayerGender] = useState<Gender>("male");
   const [playerClassification, setPlayerClassification] =
@@ -242,6 +244,48 @@ export default function TournamentDetailPage() {
     setAddLoading(false);
   }
 
+  function handleEditPlayer(player: Player) {
+    setEditingPlayer(player);
+    setPlayerName(player.name);
+    setPlayerGender(player.gender);
+    setPlayerClassification(player.classification);
+    setShowAddPlayer(true);
+  }
+
+  async function handleSaveEdit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingPlayer) return;
+    setAddError("");
+    setAddLoading(true);
+
+    const { error: dbError } = await supabase
+      .from("players")
+      .update({
+        name: playerName.trim(),
+        gender: playerGender,
+        classification: playerClassification,
+      })
+      .eq("id", editingPlayer.id);
+
+    if (dbError) {
+      setAddError(dbError.message);
+      setAddLoading(false);
+      return;
+    }
+
+    setPlayers(
+      players.map((p) =>
+        p.id === editingPlayer.id
+          ? { ...p, name: playerName.trim(), gender: playerGender, classification: playerClassification }
+          : p
+      )
+    );
+    setEditingPlayer(null);
+    setPlayerName("");
+    setShowAddPlayer(false);
+    setAddLoading(false);
+  }
+
   async function handleDeletePlayer(playerId: string) {
     await supabase.from("players").delete().eq("id", playerId);
     setPlayers(players.filter((p) => p.id !== playerId));
@@ -412,6 +456,7 @@ export default function TournamentDetailPage() {
             players={players}
             isFull={isFull}
             maxPlayers={tournament.max_players}
+            onEdit={handleEditPlayer}
             onDelete={handleDeletePlayer}
           />
         )}
@@ -447,15 +492,19 @@ export default function TournamentDetailPage() {
         </button>
       )}
 
-      {/* Add Player Modal */}
+      {/* Add/Edit Player Modal */}
       {showAddPlayer && (
         <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-black/40">
           <div className="w-full max-w-md rounded-t-2xl sm:rounded-2xl bg-white p-6 shadow-xl">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-gray-900">Add Player</h2>
+              <h2 className="text-lg font-bold text-gray-900">
+                {editingPlayer ? "Edit Player" : "Add Player"}
+              </h2>
               <button
                 onClick={() => {
                   setShowAddPlayer(false);
+                  setEditingPlayer(null);
+                  setPlayerName("");
                   setAddError("");
                 }}
                 className="text-gray-400 hover:text-gray-600"
@@ -463,7 +512,10 @@ export default function TournamentDetailPage() {
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <form onSubmit={handleAddPlayer} className="space-y-3">
+            <form
+              onSubmit={editingPlayer ? handleSaveEdit : handleAddPlayer}
+              className="space-y-3"
+            >
               <Input
                 id="playerName"
                 label="Name"
@@ -508,7 +560,13 @@ export default function TournamentDetailPage() {
                 className="w-full"
                 disabled={addLoading}
               >
-                {addLoading ? "Adding..." : "Add Player"}
+                {addLoading
+                  ? editingPlayer
+                    ? "Saving..."
+                    : "Adding..."
+                  : editingPlayer
+                    ? "Save Changes"
+                    : "Add Player"}
               </Button>
             </form>
           </div>
@@ -572,11 +630,13 @@ function PlayersTab({
   players,
   isFull,
   maxPlayers,
+  onEdit,
   onDelete,
 }: {
   players: Player[];
   isFull: boolean;
   maxPlayers: number;
+  onEdit: (player: Player) => void;
   onDelete: (id: string) => void;
 }) {
   if (players.length === 0) {
@@ -597,7 +657,7 @@ function PlayersTab({
       )}
 
       {/* Table Header */}
-      <div className="grid grid-cols-[3rem_1fr_6rem_5rem_2rem] items-center border-b border-gray-200 px-4 py-2 text-xs font-medium uppercase tracking-wider text-gray-400">
+      <div className="grid grid-cols-[2.5rem_12rem_5rem_5rem_3.5rem] sm:grid-cols-[3rem_16rem_6rem_6rem_4.5rem] items-center border-b border-gray-200 px-4 py-2 text-xs font-medium uppercase tracking-wider text-gray-400">
         <span>No.</span>
         <span>Name</span>
         <span>Class</span>
@@ -609,7 +669,7 @@ function PlayersTab({
       {players.map((player, index) => (
         <div
           key={player.id}
-          className="grid grid-cols-[3rem_1fr_6rem_5rem_2rem] items-center border-b border-gray-100 px-4 py-4"
+          className="grid grid-cols-[2.5rem_12rem_5rem_5rem_3.5rem] sm:grid-cols-[3rem_16rem_6rem_6rem_4.5rem] items-center border-b border-gray-100 px-4 py-4"
         >
           <span className="text-sm text-gray-400">{index + 1}</span>
           <span className="text-sm font-semibold text-gray-900 uppercase">
@@ -621,12 +681,20 @@ function PlayersTab({
           <span className="text-sm font-bold text-gray-900 uppercase">
             {player.gender}
           </span>
-          <button
-            onClick={() => onDelete(player.id)}
-            className="text-gray-300 hover:text-red-500 transition-colors"
-          >
-            <Trash2 className="h-4 w-4" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onEdit(player)}
+              className="text-gray-300 hover:text-blue-500 transition-colors"
+            >
+              <Pencil className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => onDelete(player.id)}
+              className="text-gray-300 hover:text-red-500 transition-colors"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       ))}
     </div>

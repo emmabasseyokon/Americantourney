@@ -375,7 +375,7 @@ export default function TournamentDetailPage() {
   );
 
   return (
-    <div className="flex flex-col h-[calc(100vh-3.5rem)]">
+    <div className="flex flex-col h-[calc(100vh-3.5rem)] bg-white">
       {/* Header */}
       <div className="border-b border-gray-200 bg-white px-4 py-3">
         <div className="mx-auto flex max-w-4xl items-center justify-between">
@@ -742,7 +742,7 @@ function MatchupsTab({
           {currentRoundData?.matches.map((match) => (
             <div
               key={match.id}
-              className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
+              className="rounded-xl border border-gray-100 bg-white p-4 shadow-md"
             >
               {/* Card Header */}
               <div className="flex items-center justify-between mb-3">
@@ -857,7 +857,7 @@ function RankingsTab({
   }
 
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto bg-white">
       <table className="w-full text-left text-sm">
         <thead>
           <tr className="border-b border-gray-200 text-xs uppercase tracking-wider text-gray-400">

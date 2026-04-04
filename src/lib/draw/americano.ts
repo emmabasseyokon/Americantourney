@@ -1,8 +1,6 @@
 import type { Player } from "@/types/database";
 import {
   CLASSIFICATION_STRENGTH,
-  HIGHER_TIERS,
-  LOWER_TIERS,
   type MatchDraw,
   type RoundDraw,
   type Team,
@@ -28,112 +26,128 @@ function pairKey(a: string, b: string): string {
 }
 
 /**
- * Split players into higher-tier and lower-tier pools.
- * If pools are uneven, moves boundary players to balance them.
- */
-function splitPools(players: Player[]): { poolH: Player[]; poolL: Player[] } {
-  const poolH = players.filter((p) =>
-    HIGHER_TIERS.includes(p.classification)
-  );
-  const poolL = players.filter((p) =>
-    LOWER_TIERS.includes(p.classification)
-  );
-
-  // Balance pools: move players from the larger pool to the smaller
-  while (poolH.length > poolL.length + 1) {
-    // Move weakest from H to L
-    poolH.sort(
-      (a, b) =>
-        CLASSIFICATION_STRENGTH[a.classification] -
-        CLASSIFICATION_STRENGTH[b.classification]
-    );
-    poolL.push(poolH.shift()!);
-  }
-  while (poolL.length > poolH.length + 1) {
-    // Move strongest from L to H
-    poolL.sort(
-      (a, b) =>
-        CLASSIFICATION_STRENGTH[b.classification] -
-        CLASSIFICATION_STRENGTH[a.classification]
-    );
-    poolH.push(poolL.shift()!);
-  }
-
-  // If still off by one (odd total), move one more to even them out
-  if (Math.abs(poolH.length - poolL.length) > 0) {
-    if (poolH.length > poolL.length) {
-      poolH.sort(
-        (a, b) =>
-          CLASSIFICATION_STRENGTH[a.classification] -
-          CLASSIFICATION_STRENGTH[b.classification]
-      );
-      poolL.push(poolH.shift()!);
-    } else {
-      poolL.sort(
-        (a, b) =>
-          CLASSIFICATION_STRENGTH[b.classification] -
-          CLASSIFICATION_STRENGTH[a.classification]
-      );
-      poolH.push(poolL.shift()!);
-    }
-  }
-
-  return { poolH, poolL };
-}
-
-/**
- * Generate teams by pairing across pools, avoiding repeat partnerships.
+ * Generate teams with constraints:
+ * 1. Two females CANNOT pair together
+ * 2. Same classification should not pair (relaxed if unavoidable)
+ * 3. Females pair with higher-classified males for balance
+ * 4. Male+male is allowed when there are more males than females
+ * 5. Avoid repeat partnerships from prior rounds
  */
 function generateTeams(
-  poolH: Player[],
-  poolL: Player[],
+  players: Player[],
   usedPairs: Set<string>
 ): Team[] {
-  const shuffledH = shuffle(poolH);
-  const shuffledL = shuffle(poolL);
+  const females = shuffle(players.filter((p) => p.gender === "female"));
+  const males = shuffle(
+    players.filter((p) => p.gender === "male")
+  ).sort(
+    // Sort males by classification descending so higher-class males are paired first with females
+    (a, b) =>
+      CLASSIFICATION_STRENGTH[b.classification] -
+      CLASSIFICATION_STRENGTH[a.classification]
+  );
+
   const teams: Team[] = [];
+  const paired = new Set<string>(); // track paired player IDs
 
-  const usedL = new Set<number>();
+  // Step 1: Pair each female with a male (different classification, no repeat)
+  for (const female of females) {
+    let bestMatch: Player | null = null;
 
-  for (let i = 0; i < shuffledH.length; i++) {
-    const hPlayer = shuffledH[i];
-    let paired = false;
+    // Priority 1: different classification + not a repeat pair
+    for (const male of males) {
+      if (paired.has(male.id)) continue;
+      if (male.classification === female.classification) continue;
+      if (usedPairs.has(pairKey(male.id, female.id))) continue;
+      bestMatch = male;
+      break;
+    }
 
-    // Try to find an L-pool partner not already used in a prior round
-    for (let j = 0; j < shuffledL.length; j++) {
-      if (usedL.has(j)) continue;
-      const lPlayer = shuffledL[j];
-      const key = pairKey(hPlayer.id, lPlayer.id);
-
-      if (!usedPairs.has(key)) {
-        teams.push({
-          player1: hPlayer,
-          player2: lPlayer,
-          strengthScore:
-            CLASSIFICATION_STRENGTH[hPlayer.classification] +
-            CLASSIFICATION_STRENGTH[lPlayer.classification],
-        });
-        usedL.add(j);
-        paired = true;
+    // Priority 2: different classification (allow repeat pair)
+    if (!bestMatch) {
+      for (const male of males) {
+        if (paired.has(male.id)) continue;
+        if (male.classification === female.classification) continue;
+        bestMatch = male;
         break;
       }
     }
 
-    // Fallback: pair with any available partner (repeat partnership if unavoidable)
-    if (!paired) {
-      for (let j = 0; j < shuffledL.length; j++) {
-        if (!usedL.has(j)) {
-          teams.push({
-            player1: hPlayer,
-            player2: shuffledL[j],
-            strengthScore:
-              CLASSIFICATION_STRENGTH[hPlayer.classification] +
-              CLASSIFICATION_STRENGTH[shuffledL[j].classification],
-          });
-          usedL.add(j);
+    // Priority 3: any available male (same classification if unavoidable)
+    if (!bestMatch) {
+      for (const male of males) {
+        if (paired.has(male.id)) continue;
+        bestMatch = male;
+        break;
+      }
+    }
+
+    if (bestMatch) {
+      teams.push({
+        player1: bestMatch,
+        player2: female,
+        strengthScore:
+          CLASSIFICATION_STRENGTH[bestMatch.classification] +
+          CLASSIFICATION_STRENGTH[female.classification],
+      });
+      paired.add(bestMatch.id);
+      paired.add(female.id);
+    }
+  }
+
+  // Step 2: Pair remaining males with each other (different classification, no repeat)
+  const remainingMales = shuffle(
+    males.filter((m) => !paired.has(m.id))
+  );
+
+  const usedRemaining = new Set<number>();
+
+  for (let i = 0; i < remainingMales.length; i++) {
+    if (usedRemaining.has(i)) continue;
+    const player1 = remainingMales[i];
+    let foundIdx = -1;
+
+    // Priority 1: different classification + not a repeat pair
+    for (let j = i + 1; j < remainingMales.length; j++) {
+      if (usedRemaining.has(j)) continue;
+      const player2 = remainingMales[j];
+      if (player2.classification === player1.classification) continue;
+      if (usedPairs.has(pairKey(player1.id, player2.id))) continue;
+      foundIdx = j;
+      break;
+    }
+
+    // Priority 2: different classification (allow repeat)
+    if (foundIdx === -1) {
+      for (let j = i + 1; j < remainingMales.length; j++) {
+        if (usedRemaining.has(j)) continue;
+        if (remainingMales[j].classification === player1.classification) continue;
+        foundIdx = j;
+        break;
+      }
+    }
+
+    // Priority 3: any available male
+    if (foundIdx === -1) {
+      for (let j = i + 1; j < remainingMales.length; j++) {
+        if (!usedRemaining.has(j)) {
+          foundIdx = j;
           break;
         }
       }
+    }
+
+    if (foundIdx !== -1) {
+      const player2 = remainingMales[foundIdx];
+      teams.push({
+        player1,
+        player2,
+        strengthScore:
+          CLASSIFICATION_STRENGTH[player1.classification] +
+          CLASSIFICATION_STRENGTH[player2.classification],
+      });
+      usedRemaining.add(i);
+      usedRemaining.add(foundIdx);
     }
   }
 
@@ -180,8 +194,7 @@ export function generateRoundDraw(
     throw new Error("Player count must be even for doubles.");
   }
 
-  const { poolH, poolL } = splitPools(players);
-  const teams = generateTeams(poolH, poolL, pairingHistory);
+  const teams = generateTeams(players, pairingHistory);
   const matches = formMatches(teams);
 
   return { roundNumber, matches };

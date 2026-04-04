@@ -1431,6 +1431,12 @@ function MatchupsTab({
   );
 }
 
+function ordinal(n: number): string {
+  const s = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+
 /* ─── Rankings Tab ─── */
 function RankingsTab({
   rankings,
@@ -1492,8 +1498,8 @@ function RankingsTab({
                     : "—"}
                 </td>
               ))}
-              <td className="px-4 py-3 text-center font-bold text-gray-900">
-                {row.total}
+              <td className="px-4 py-3 text-center font-bold text-gray-900 whitespace-nowrap">
+                {row.total} <span className="text-xs font-medium text-gray-400">({ordinal(index + 1)})</span>
               </td>
             </tr>
           ))}

@@ -4,14 +4,18 @@ import { Button } from "@/components/ui/Button";
 import { useSupabase } from "@/components/providers/SupabaseProvider";
 import { Trophy, Menu, X } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 
 export function Navbar() {
   const { user, loading } = useSupabase();
   const { supabase } = useSupabase();
   const router = useRouter();
+  const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+
+  // Hide navbar on public live pages
+  if (pathname.includes("/live")) return null;
 
   async function handleLogout() {
     await supabase.auth.signOut();

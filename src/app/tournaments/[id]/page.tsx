@@ -777,8 +777,8 @@ function PlayersTab({
 
       {/* Delete Confirmation Modal */}
       {confirmDelete && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-sm rounded-lg bg-white p-6 shadow-xl">
+        <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-black/40">
+          <div className="w-full max-w-sm rounded-t-2xl sm:rounded-lg bg-white p-6 shadow-xl">
             <h2 className="text-lg font-bold text-gray-900">Delete player?</h2>
             <p className="mt-2 text-sm text-gray-500">
               Are you sure you want to delete <strong>{confirmDelete.name}</strong>? This action cannot be undone.

@@ -371,10 +371,10 @@ function LiveMatchupsTab({
     (d) => d.round.round_number === activeRound
   );
 
-  // Build map: player ID → court tag for players in_progress in OTHER rounds
+  // Build map: player ID → court tag for players in_progress — only show on FUTURE rounds
   const playerActiveCourt = new Map<string, string>();
   for (const rd of matchupData) {
-    if (rd.round.round_number === activeRound) continue;
+    if (rd.round.round_number >= activeRound) continue;
     for (const m of rd.matches) {
       if (m.status !== "in_progress" || m.court_number === 0) continue;
       const courtTag = m.court_number === 8 ? "CC" : `C${m.court_number}`;

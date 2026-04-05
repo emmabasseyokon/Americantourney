@@ -2,7 +2,17 @@
 
 import { createClient } from "@/lib/supabase/client";
 import { SkeletonList } from "@/components/ui/Skeleton";
-import type { Tournament, Player, Round, Match } from "@/types/database";
+import type { Tournament, Player, Round } from "@/types/database";
+import {
+  fetchAndEnrichMatchups,
+  fetchAndCalculateRankings,
+  buildPlayerActiveCourts,
+  buildPlayerNotReady,
+  isMatchNotReady,
+  type RoundMatchupData,
+  type LeaderboardRow,
+} from "@/lib/utils/matchups";
+import { ordinal, getCourtLabel, getStatusLabel, getStatusColor } from "@/lib/utils/format";
 import {
   ClipboardList,
   Swords,
@@ -25,17 +35,10 @@ export default function LiveTournamentPage() {
   const [loading, setLoading] = useState(true);
 
   // Matchups state
-  const [matchupData, setMatchupData] = useState<
-    {
-      round: Round;
-      matches: (Match & { team1Players: Player[]; team2Players: Player[] })[];
-    }[]
-  >([]);
+  const [matchupData, setMatchupData] = useState<RoundMatchupData[]>([]);
 
   // Rankings state
-  const [rankings, setRankings] = useState<
-    { player: Player; roundScores: Record<number, number>; total: number }[]
-  >([]);
+  const [rankings, setRankings] = useState<LeaderboardRow[]>([]);
 
   // Initial fetch + Supabase Realtime subscriptions
   useEffect(() => {
@@ -91,120 +94,11 @@ export default function LiveTournamentPage() {
   }, [supabase, tournamentId]);
 
   useEffect(() => {
-    async function fetchMatchups() {
-      if (rounds.length === 0) return;
-
-      const roundIds = rounds.map((r) => r.id);
-      const { data: matches } = await supabase
-        .from("matches")
-        .select("*")
-        .in("round_id", roundIds)
-        .order("court_number");
-
-      if (!matches || matches.length === 0) {
-        setMatchupData([]);
-        return;
-      }
-
-      const matchIds = matches.map((m) => m.id);
-      const { data: matchPlayers } = await supabase
-        .from("match_players")
-        .select("*")
-        .in("match_id", matchIds);
-
-      const playerMap = new Map(players.map((p) => [p.id, p]));
-
-      const grouped = rounds.map((round) => {
-        const roundMatches = matches
-          .filter((m) => m.round_id === round.id)
-          .map((match) => {
-            const mps = (matchPlayers ?? []).filter(
-              (mp) => mp.match_id === match.id
-            );
-            return {
-              ...match,
-              team1Players: mps
-                .filter((mp) => mp.team === 1)
-                .map((mp) => playerMap.get(mp.player_id)!)
-                .filter(Boolean),
-              team2Players: mps
-                .filter((mp) => mp.team === 2)
-                .map((mp) => playerMap.get(mp.player_id)!)
-                .filter(Boolean),
-            };
-          });
-        return { round, matches: roundMatches };
-      });
-
-      setMatchupData(grouped);
-    }
-
-    async function fetchRankings() {
-      if (rounds.length === 0) {
-        setRankings(
-          players.map((p) => ({ player: p, roundScores: {}, total: 0 }))
-        );
-        return;
-      }
-
-      const roundIds = rounds.map((r) => r.id);
-      const { data: matches } = await supabase
-        .from("matches")
-        .select("*")
-        .in("round_id", roundIds);
-      const matchIds = (matches ?? []).map((m) => m.id);
-      const { data: matchPlayers } = await supabase
-        .from("match_players")
-        .select("*")
-        .in("match_id", matchIds);
-
-      const matchRoundMap = new Map<string, number>();
-      for (const match of matches ?? []) {
-        const round = rounds.find((r) => r.id === match.round_id);
-        if (round) matchRoundMap.set(match.id, round.round_number);
-      }
-
-      const playerScores = new Map<string, Record<number, number>>();
-      for (const player of players) {
-        playerScores.set(player.id, {});
-      }
-
-      for (const match of matches ?? []) {
-        if (match.status !== "completed") continue;
-        const roundNum = matchRoundMap.get(match.id);
-        if (!roundNum) continue;
-        const mps = (matchPlayers ?? []).filter(
-          (mp) => mp.match_id === match.id
-        );
-        for (const mp of mps) {
-          const score = mp.team === 1 ? match.team1_score : match.team2_score;
-          const scores = playerScores.get(mp.player_id);
-          if (scores) scores[roundNum] = score;
-        }
-      }
-
-      const rows = players.map((player) => {
-        const roundScores = playerScores.get(player.id) ?? {};
-        const total = Object.values(roundScores).reduce((s, v) => s + v, 0);
-        return { player, roundScores, total };
-      });
-
-      rows.sort((a, b) => {
-        if (b.total !== a.total) return b.total - a.total;
-        const aMax = Math.max(0, ...Object.values(a.roundScores));
-        const bMax = Math.max(0, ...Object.values(b.roundScores));
-        if (bMax !== aMax) return bMax - aMax;
-        return a.player.name.localeCompare(b.player.name);
-      });
-
-      setRankings(rows);
-    }
-
     if (activeTab === "matchups" && rounds.length > 0) {
-      fetchMatchups();
+      fetchAndEnrichMatchups(supabase, rounds, players).then(setMatchupData);
     }
     if (activeTab === "rankings") {
-      fetchRankings();
+      fetchAndCalculateRankings(supabase, players, rounds).then(setRankings);
     }
   }, [activeTab, rounds, players, supabase]);
 
@@ -355,26 +249,6 @@ function LivePlayersTab({ players }: { players: Player[] }) {
   );
 }
 
-/* ─── Status helpers ─── */
-function getCourtLabel(match: Match): string {
-  if (match.court_name) return match.court_name;
-  if (match.court_number > 0 && match.court_number <= 7) return `Court ${match.court_number}`;
-  if (match.court_number === 8) return "Centre Court";
-  return "";
-}
-
-function getStatusLabel(status: string): string {
-  if (status === "pending") return "Ready";
-  if (status === "in_progress") return "In Progress";
-  return "Completed";
-}
-
-function getStatusColor(status: string): string {
-  if (status === "pending") return "text-blue-500";
-  if (status === "in_progress") return "text-orange-500";
-  return "text-green-500";
-}
-
 /* ─── Matchups Tab ─── */
 function LiveMatchupsTab({
   tournament,
@@ -383,10 +257,7 @@ function LiveMatchupsTab({
 }: {
   tournament: Tournament;
   rounds: Round[];
-  matchupData: {
-    round: Round;
-    matches: (Match & { team1Players: Player[]; team2Players: Player[] })[];
-  }[];
+  matchupData: RoundMatchupData[];
 }) {
   const [activeRound, setActiveRound] = useState(1);
 
@@ -399,39 +270,8 @@ function LiveMatchupsTab({
     (d) => d.round.round_number === activeRound
   );
 
-  // Build map: player ID → court tag for players in_progress — only show on FUTURE rounds
-  const playerActiveCourt = new Map<string, string>();
-  for (const rd of matchupData) {
-    if (rd.round.round_number >= activeRound) continue;
-    for (const m of rd.matches) {
-      if (m.status !== "in_progress" || m.court_number === 0) continue;
-      const courtTag = m.court_number === 8 ? "CC" : `C${m.court_number}`;
-      for (const p of [...m.team1Players, ...m.team2Players]) {
-        playerActiveCourt.set(p.id, courtTag);
-      }
-    }
-  }
-
-  // Players whose previous-round match is in progress (actively on court)
-  const playerNotReady = new Set<string>();
-  for (const rd of matchupData) {
-    if (rd.round.round_number >= activeRound) continue;
-    for (const m of rd.matches) {
-      if (m.status !== "in_progress") continue;
-      for (const p of [...m.team1Players, ...m.team2Players]) {
-        playerNotReady.add(p.id);
-      }
-    }
-  }
-
-  function isMatchNotReady(
-    match: Match & { team1Players: Player[]; team2Players: Player[] }
-  ): boolean {
-    if (match.status !== "pending") return false;
-    return [...match.team1Players, ...match.team2Players].some((p) =>
-      playerNotReady.has(p.id)
-    );
-  }
+  const playerActiveCourt = buildPlayerActiveCourts(matchupData, activeRound);
+  const playerNotReady = buildPlayerNotReady(matchupData, activeRound);
 
   if (rounds.length === 0) {
     return (
@@ -474,12 +314,12 @@ function LiveMatchupsTab({
               <div className="flex items-center justify-between mb-3">
                 <span
                   className={`text-xs font-semibold uppercase tracking-wide ${
-                    isMatchNotReady(match)
+                    isMatchNotReady(match, playerNotReady)
                       ? "text-red-500"
                       : getStatusColor(match.status)
                   }`}
                 >
-                  {isMatchNotReady(match)
+                  {isMatchNotReady(match, playerNotReady)
                     ? "Not Ready"
                     : getStatusLabel(match.status)}
                 </span>
@@ -565,22 +405,12 @@ function LiveMatchupsTab({
   );
 }
 
-function ordinal(n: number): string {
-  const s = ["th", "st", "nd", "rd"];
-  const v = n % 100;
-  return n + (s[(v - 20) % 10] || s[v] || s[0]);
-}
-
 /* ─── Rankings Tab (no classification) ─── */
 function LiveRankingsTab({
   rankings,
   roundColumns,
 }: {
-  rankings: {
-    player: Player;
-    roundScores: Record<number, number>;
-    total: number;
-  }[];
+  rankings: LeaderboardRow[];
   roundColumns: number[];
 }) {
   if (rankings.length === 0) {

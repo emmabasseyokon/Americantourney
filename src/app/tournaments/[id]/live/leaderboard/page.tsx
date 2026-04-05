@@ -2,15 +2,9 @@
 
 import { createClient } from "@/lib/supabase/client";
 import { SkeletonTable } from "@/components/ui/Skeleton";
-import type { Player } from "@/types/database";
+import { fetchAndCalculateRankings, type LeaderboardRow } from "@/lib/utils/matchups";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-
-interface LeaderboardRow {
-  player: Player;
-  roundScores: Record<number, number>;
-  total: number;
-}
 
 export default function LiveLeaderboardPage() {
   const supabase = useMemo(() => createClient(), []);
@@ -41,69 +35,7 @@ export default function LiveLeaderboardPage() {
       const players = pRes.data ?? [];
       const rounds = rRes.data ?? [];
 
-      if (rounds.length === 0) {
-        setRows(
-          players.map((p) => ({ player: p, roundScores: {}, total: 0 }))
-        );
-        setLoading(false);
-        return;
-      }
-
-      const roundIds = rounds.map((r) => r.id);
-      const { data: matches } = await supabase
-        .from("matches")
-        .select("*")
-        .in("round_id", roundIds);
-
-      const matchIds = (matches ?? []).map((m) => m.id);
-      const { data: matchPlayers } = await supabase
-        .from("match_players")
-        .select("*")
-        .in("match_id", matchIds);
-
-      const matchRoundMap = new Map<string, number>();
-      for (const match of matches ?? []) {
-        const round = rounds.find((r) => r.id === match.round_id);
-        if (round) matchRoundMap.set(match.id, round.round_number);
-      }
-
-      const playerScores = new Map<string, Record<number, number>>();
-      for (const player of players) {
-        playerScores.set(player.id, {});
-      }
-
-      for (const match of matches ?? []) {
-        if (match.status !== "completed") continue;
-        const roundNum = matchRoundMap.get(match.id);
-        if (!roundNum) continue;
-
-        const mps = (matchPlayers ?? []).filter(
-          (mp) => mp.match_id === match.id
-        );
-        for (const mp of mps) {
-          const score = mp.team === 1 ? match.team1_score : match.team2_score;
-          const scores = playerScores.get(mp.player_id);
-          if (scores) scores[roundNum] = score;
-        }
-      }
-
-      const leaderboardRows: LeaderboardRow[] = players.map((player) => {
-        const roundScores = playerScores.get(player.id) ?? {};
-        const total = Object.values(roundScores).reduce(
-          (sum, s) => sum + s,
-          0
-        );
-        return { player, roundScores, total };
-      });
-
-      leaderboardRows.sort((a, b) => {
-        if (b.total !== a.total) return b.total - a.total;
-        const aMax = Math.max(0, ...Object.values(a.roundScores));
-        const bMax = Math.max(0, ...Object.values(b.roundScores));
-        if (bMax !== aMax) return bMax - aMax;
-        return a.player.name.localeCompare(b.player.name);
-      });
-
+      const leaderboardRows = await fetchAndCalculateRankings(supabase, players, rounds);
       setRows(leaderboardRows);
       setLoading(false);
     }

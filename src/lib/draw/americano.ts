@@ -26,91 +26,104 @@ function pairKey(a: string, b: string): string {
 }
 
 /**
- * Check if two classifications are forbidden from pairing as teammates.
- * Rules: same classification cannot pair, and A+ cannot pair with A.
+ * Check if two players are forbidden from pairing as teammates.
+ * Hard rules (never violated):
+ * 1. Two females cannot pair (regardless of classification)
+ * 2. Same classification cannot pair (A+/A+, A/A, B/B, B+/B+, C/C, C+/C+)
+ * 3. A+ cannot pair with A
  */
-function isForbiddenPairing(c1: string, c2: string): boolean {
-  if (c1 === c2) return true;
-  const sorted = [c1, c2].sort();
+function isForbiddenPairing(p1: Player, p2: Player): boolean {
+  if (p1.gender === "female" && p2.gender === "female") return true;
+  if (p1.classification === p2.classification) return true;
+  const sorted = [p1.classification, p2.classification].sort();
   if (sorted[0] === "A" && sorted[1] === "A+") return true;
   return false;
 }
 
 /**
  * Generate teams with constraints:
- * 1. Two females CANNOT pair together
- * 2. Same classification should not pair (relaxed if unavoidable)
- * 3. Females pair with higher-classified males for balance
- * 4. Male+male is allowed when there are more males than females
- * 5. Avoid repeat partnerships from prior rounds
+ * 1. Two females CANNOT pair together (hard rule)
+ * 2. Same classification CANNOT pair (hard rule)
+ * 3. A+ CANNOT pair A (hard rule)
+ * 4. Females pair with higher-classified males for balance
+ * 5. Male+male is allowed when there are more males than females
+ * 6. Avoid repeat partnerships from prior rounds (soft preference)
+ *
+ * Uses retry logic — reshuffles and retries if pairing fails,
+ * rather than breaking hard rules.
  */
 function generateTeams(
   players: Player[],
   usedPairs: Set<string>
 ): Team[] {
-  const females = shuffle(players.filter((p) => p.gender === "female"));
-  const males = shuffle(
-    players.filter((p) => p.gender === "male")
-  ).sort(
-    // Sort males by classification descending so higher-class males are paired first with females
-    (a, b) =>
-      CLASSIFICATION_STRENGTH[b.classification] -
-      CLASSIFICATION_STRENGTH[a.classification]
+  const MAX_ATTEMPTS = 50;
+
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    const result = tryGenerateTeams(players, usedPairs, attempt > 0);
+    if (result) return result;
+  }
+
+  // Final fallback: allow repeat pairs but never break hard rules
+  const result = tryGenerateTeams(players, usedPairs, true);
+  if (result) return result;
+
+  throw new Error(
+    "Cannot generate valid teams. Check player classifications — hard rules (same class, A+/A, two females) may make pairing impossible with this player set."
   );
+}
+
+function tryGenerateTeams(
+  players: Player[],
+  usedPairs: Set<string>,
+  allowRepeats: boolean
+): Team[] | null {
+  const females = shuffle(players.filter((p) => p.gender === "female"));
+  const males = shuffle(players.filter((p) => p.gender === "male"));
 
   const teams: Team[] = [];
-  const paired = new Set<string>(); // track paired player IDs
+  const paired = new Set<string>();
 
-  // Step 1: Pair each female with a male (different classification, no repeat)
+  // Step 1: Pair each female with a male
   for (const female of females) {
     let bestMatch: Player | null = null;
 
-    // Priority 1: different classification + not a repeat pair
-    for (const male of males) {
-      if (paired.has(male.id)) continue;
-      if (isForbiddenPairing(male.classification, female.classification)) continue;
-      if (usedPairs.has(pairKey(male.id, female.id))) continue;
-      bestMatch = male;
-      break;
-    }
-
-    // Priority 2: different classification (allow repeat pair)
-    if (!bestMatch) {
+    // Try: valid classification + not a repeat pair
+    if (!allowRepeats) {
       for (const male of males) {
         if (paired.has(male.id)) continue;
-        if (isForbiddenPairing(male.classification, female.classification)) continue;
+        if (isForbiddenPairing(male, female)) continue;
+        if (usedPairs.has(pairKey(male.id, female.id))) continue;
         bestMatch = male;
         break;
       }
     }
 
-    // Priority 3: any available male (same classification if unavoidable)
+    // Fallback: valid classification (allow repeat pair)
     if (!bestMatch) {
       for (const male of males) {
         if (paired.has(male.id)) continue;
+        if (isForbiddenPairing(male, female)) continue;
         bestMatch = male;
         break;
       }
     }
 
-    if (bestMatch) {
-      teams.push({
-        player1: bestMatch,
-        player2: female,
-        strengthScore:
-          CLASSIFICATION_STRENGTH[bestMatch.classification] +
-          CLASSIFICATION_STRENGTH[female.classification],
-      });
-      paired.add(bestMatch.id);
-      paired.add(female.id);
-    }
+    // No valid partner found — this shuffle failed
+    if (!bestMatch) return null;
+
+    teams.push({
+      player1: bestMatch,
+      player2: female,
+      strengthScore:
+        CLASSIFICATION_STRENGTH[bestMatch.classification] +
+        CLASSIFICATION_STRENGTH[female.classification],
+    });
+    paired.add(bestMatch.id);
+    paired.add(female.id);
   }
 
-  // Step 2: Pair remaining males with each other (different classification, no repeat)
-  const remainingMales = shuffle(
-    males.filter((m) => !paired.has(m.id))
-  );
-
+  // Step 2: Pair remaining males with each other
+  const remainingMales = shuffle(males.filter((m) => !paired.has(m.id)));
   const usedRemaining = new Set<number>();
 
   for (let i = 0; i < remainingMales.length; i++) {
@@ -118,48 +131,40 @@ function generateTeams(
     const player1 = remainingMales[i];
     let foundIdx = -1;
 
-    // Priority 1: different classification + not a repeat pair
-    for (let j = i + 1; j < remainingMales.length; j++) {
-      if (usedRemaining.has(j)) continue;
-      const player2 = remainingMales[j];
-      if (isForbiddenPairing(player2.classification, player1.classification)) continue;
-      if (usedPairs.has(pairKey(player1.id, player2.id))) continue;
-      foundIdx = j;
-      break;
-    }
-
-    // Priority 2: different classification (allow repeat)
-    if (foundIdx === -1) {
+    // Try: valid classification + not a repeat pair
+    if (!allowRepeats) {
       for (let j = i + 1; j < remainingMales.length; j++) {
         if (usedRemaining.has(j)) continue;
-        if (isForbiddenPairing(remainingMales[j].classification, player1.classification)) continue;
+        if (isForbiddenPairing(player1, remainingMales[j])) continue;
+        if (usedPairs.has(pairKey(player1.id, remainingMales[j].id))) continue;
         foundIdx = j;
         break;
       }
     }
 
-    // Priority 3: any available male
+    // Fallback: valid classification (allow repeat)
     if (foundIdx === -1) {
       for (let j = i + 1; j < remainingMales.length; j++) {
-        if (!usedRemaining.has(j)) {
-          foundIdx = j;
-          break;
-        }
+        if (usedRemaining.has(j)) continue;
+        if (isForbiddenPairing(player1, remainingMales[j])) continue;
+        foundIdx = j;
+        break;
       }
     }
 
-    if (foundIdx !== -1) {
-      const player2 = remainingMales[foundIdx];
-      teams.push({
-        player1,
-        player2,
-        strengthScore:
-          CLASSIFICATION_STRENGTH[player1.classification] +
-          CLASSIFICATION_STRENGTH[player2.classification],
-      });
-      usedRemaining.add(i);
-      usedRemaining.add(foundIdx);
-    }
+    // No valid partner — this shuffle failed
+    if (foundIdx === -1) return null;
+
+    const player2 = remainingMales[foundIdx];
+    teams.push({
+      player1,
+      player2,
+      strengthScore:
+        CLASSIFICATION_STRENGTH[player1.classification] +
+        CLASSIFICATION_STRENGTH[player2.classification],
+    });
+    usedRemaining.add(i);
+    usedRemaining.add(foundIdx);
   }
 
   return teams;

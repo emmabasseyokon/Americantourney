@@ -1014,9 +1014,15 @@ function MatchupsTab({
                     <span className="font-semibold text-gray-900 uppercase">
                       {playerMap.get(matchDraw.team1.player1.id)?.name ?? matchDraw.team1.player1.name}
                     </span>
+                    <span className="text-xs font-medium text-gray-500">
+                      ({matchDraw.team1.player1.classification})
+                    </span>
                     <span className="text-gray-400">/</span>
                     <span className="font-semibold text-gray-900 uppercase">
                       {playerMap.get(matchDraw.team1.player2.id)?.name ?? matchDraw.team1.player2.name}
+                    </span>
+                    <span className="text-xs font-medium text-gray-500">
+                      ({matchDraw.team1.player2.classification})
                     </span>
                   </div>
                 </div>
@@ -1030,9 +1036,15 @@ function MatchupsTab({
                     <span className="font-semibold text-gray-900 uppercase">
                       {playerMap.get(matchDraw.team2.player1.id)?.name ?? matchDraw.team2.player1.name}
                     </span>
+                    <span className="text-xs font-medium text-gray-500">
+                      ({matchDraw.team2.player1.classification})
+                    </span>
                     <span className="text-gray-400">/</span>
                     <span className="font-semibold text-gray-900 uppercase">
                       {playerMap.get(matchDraw.team2.player2.id)?.name ?? matchDraw.team2.player2.name}
+                    </span>
+                    <span className="text-xs font-medium text-gray-500">
+                      ({matchDraw.team2.player2.classification})
                     </span>
                   </div>
                 </div>

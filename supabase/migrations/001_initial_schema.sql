@@ -179,3 +179,9 @@ create policy "Tournament owners can create match players"
       where m.id = match_id
     )
   );
+
+-- Enable Realtime for live public updates
+alter publication supabase_realtime add table tournaments;
+alter publication supabase_realtime add table players;
+alter publication supabase_realtime add table rounds;
+alter publication supabase_realtime add table matches;

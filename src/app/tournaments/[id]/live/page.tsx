@@ -37,8 +37,9 @@ export default function LiveTournamentPage() {
     { player: Player; roundScores: Record<number, number>; total: number }[]
   >([]);
 
+  // Initial fetch + Supabase Realtime subscriptions
   useEffect(() => {
-    async function fetchData() {
+    async function fetchCoreData() {
       const [tRes, pRes, rRes] = await Promise.all([
         supabase.from("tournaments").select("*").eq("id", tournamentId).single(),
         supabase
@@ -57,7 +58,36 @@ export default function LiveTournamentPage() {
       setRounds(rRes.data ?? []);
       setLoading(false);
     }
-    fetchData();
+
+    fetchCoreData();
+
+    const channel = supabase
+      .channel(`live-${tournamentId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "tournaments", filter: `id=eq.${tournamentId}` },
+        () => fetchCoreData()
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "players", filter: `tournament_id=eq.${tournamentId}` },
+        () => fetchCoreData()
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "rounds", filter: `tournament_id=eq.${tournamentId}` },
+        () => fetchCoreData()
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "matches" },
+        () => fetchCoreData()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [supabase, tournamentId]);
 
   useEffect(() => {
@@ -71,101 +101,101 @@ export default function LiveTournamentPage() {
         .in("round_id", roundIds)
         .order("court_number");
 
-    if (!matches || matches.length === 0) {
-      setMatchupData([]);
-      return;
-    }
+      if (!matches || matches.length === 0) {
+        setMatchupData([]);
+        return;
+      }
 
-    const matchIds = matches.map((m) => m.id);
-    const { data: matchPlayers } = await supabase
-      .from("match_players")
-      .select("*")
-      .in("match_id", matchIds);
+      const matchIds = matches.map((m) => m.id);
+      const { data: matchPlayers } = await supabase
+        .from("match_players")
+        .select("*")
+        .in("match_id", matchIds);
 
-    const playerMap = new Map(players.map((p) => [p.id, p]));
+      const playerMap = new Map(players.map((p) => [p.id, p]));
 
-    const grouped = rounds.map((round) => {
-      const roundMatches = matches
-        .filter((m) => m.round_id === round.id)
-        .map((match) => {
-          const mps = (matchPlayers ?? []).filter(
-            (mp) => mp.match_id === match.id
-          );
-          return {
-            ...match,
-            team1Players: mps
-              .filter((mp) => mp.team === 1)
-              .map((mp) => playerMap.get(mp.player_id)!)
-              .filter(Boolean),
-            team2Players: mps
-              .filter((mp) => mp.team === 2)
-              .map((mp) => playerMap.get(mp.player_id)!)
-              .filter(Boolean),
-          };
-        });
-      return { round, matches: roundMatches };
-    });
+      const grouped = rounds.map((round) => {
+        const roundMatches = matches
+          .filter((m) => m.round_id === round.id)
+          .map((match) => {
+            const mps = (matchPlayers ?? []).filter(
+              (mp) => mp.match_id === match.id
+            );
+            return {
+              ...match,
+              team1Players: mps
+                .filter((mp) => mp.team === 1)
+                .map((mp) => playerMap.get(mp.player_id)!)
+                .filter(Boolean),
+              team2Players: mps
+                .filter((mp) => mp.team === 2)
+                .map((mp) => playerMap.get(mp.player_id)!)
+                .filter(Boolean),
+            };
+          });
+        return { round, matches: roundMatches };
+      });
 
       setMatchupData(grouped);
     }
 
     async function fetchRankings() {
-    if (rounds.length === 0) {
-      setRankings(
-        players.map((p) => ({ player: p, roundScores: {}, total: 0 }))
-      );
-      return;
-    }
-
-    const roundIds = rounds.map((r) => r.id);
-    const { data: matches } = await supabase
-      .from("matches")
-      .select("*")
-      .in("round_id", roundIds);
-    const matchIds = (matches ?? []).map((m) => m.id);
-    const { data: matchPlayers } = await supabase
-      .from("match_players")
-      .select("*")
-      .in("match_id", matchIds);
-
-    const matchRoundMap = new Map<string, number>();
-    for (const match of matches ?? []) {
-      const round = rounds.find((r) => r.id === match.round_id);
-      if (round) matchRoundMap.set(match.id, round.round_number);
-    }
-
-    const playerScores = new Map<string, Record<number, number>>();
-    for (const player of players) {
-      playerScores.set(player.id, {});
-    }
-
-    for (const match of matches ?? []) {
-      if (match.status !== "completed") continue;
-      const roundNum = matchRoundMap.get(match.id);
-      if (!roundNum) continue;
-      const mps = (matchPlayers ?? []).filter(
-        (mp) => mp.match_id === match.id
-      );
-      for (const mp of mps) {
-        const score = mp.team === 1 ? match.team1_score : match.team2_score;
-        const scores = playerScores.get(mp.player_id);
-        if (scores) scores[roundNum] = score;
+      if (rounds.length === 0) {
+        setRankings(
+          players.map((p) => ({ player: p, roundScores: {}, total: 0 }))
+        );
+        return;
       }
-    }
 
-    const rows = players.map((player) => {
-      const roundScores = playerScores.get(player.id) ?? {};
-      const total = Object.values(roundScores).reduce((s, v) => s + v, 0);
-      return { player, roundScores, total };
-    });
+      const roundIds = rounds.map((r) => r.id);
+      const { data: matches } = await supabase
+        .from("matches")
+        .select("*")
+        .in("round_id", roundIds);
+      const matchIds = (matches ?? []).map((m) => m.id);
+      const { data: matchPlayers } = await supabase
+        .from("match_players")
+        .select("*")
+        .in("match_id", matchIds);
 
-    rows.sort((a, b) => {
-      if (b.total !== a.total) return b.total - a.total;
-      const aMax = Math.max(0, ...Object.values(a.roundScores));
-      const bMax = Math.max(0, ...Object.values(b.roundScores));
-      if (bMax !== aMax) return bMax - aMax;
-      return a.player.name.localeCompare(b.player.name);
-    });
+      const matchRoundMap = new Map<string, number>();
+      for (const match of matches ?? []) {
+        const round = rounds.find((r) => r.id === match.round_id);
+        if (round) matchRoundMap.set(match.id, round.round_number);
+      }
+
+      const playerScores = new Map<string, Record<number, number>>();
+      for (const player of players) {
+        playerScores.set(player.id, {});
+      }
+
+      for (const match of matches ?? []) {
+        if (match.status !== "completed") continue;
+        const roundNum = matchRoundMap.get(match.id);
+        if (!roundNum) continue;
+        const mps = (matchPlayers ?? []).filter(
+          (mp) => mp.match_id === match.id
+        );
+        for (const mp of mps) {
+          const score = mp.team === 1 ? match.team1_score : match.team2_score;
+          const scores = playerScores.get(mp.player_id);
+          if (scores) scores[roundNum] = score;
+        }
+      }
+
+      const rows = players.map((player) => {
+        const roundScores = playerScores.get(player.id) ?? {};
+        const total = Object.values(roundScores).reduce((s, v) => s + v, 0);
+        return { player, roundScores, total };
+      });
+
+      rows.sort((a, b) => {
+        if (b.total !== a.total) return b.total - a.total;
+        const aMax = Math.max(0, ...Object.values(a.roundScores));
+        const bMax = Math.max(0, ...Object.values(b.roundScores));
+        if (bMax !== aMax) return bMax - aMax;
+        return a.player.name.localeCompare(b.player.name);
+      });
 
       setRankings(rows);
     }

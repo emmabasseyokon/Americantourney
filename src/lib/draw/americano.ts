@@ -31,12 +31,14 @@ function pairKey(a: string, b: string): string {
  * 1. Two females cannot pair (regardless of classification)
  * 2. Same classification cannot pair (A+/A+, A/A, B/B, B+/B+, C/C, C+/C+)
  * 3. A+ cannot pair with A
+ * 4. A+ cannot pair with B+
  */
 function isForbiddenPairing(p1: Player, p2: Player): boolean {
   if (p1.gender === "female" && p2.gender === "female") return true;
   if (p1.classification === p2.classification) return true;
   const sorted = [p1.classification, p2.classification].sort();
   if (sorted[0] === "A" && sorted[1] === "A+") return true;
+  if (sorted[0] === "A+" && sorted[1] === "B+") return true;
   return false;
 }
 

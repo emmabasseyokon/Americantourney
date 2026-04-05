@@ -705,11 +705,6 @@ function PlayersTab({
 
   return (
     <div>
-      {isFull && (
-        <div className="mx-4 mt-4 rounded-lg bg-green-50 border border-green-200 p-3 text-sm text-green-700">
-          All {maxPlayers} player slots filled. Go to Matchups to generate draws!
-        </div>
-      )}
 
       {/* Table Header */}
       <div className="grid grid-cols-[2.5rem_1fr_4rem_5rem_2rem] sm:grid-cols-[3rem_2fr_1fr_1fr_2.5rem] items-center border-b border-gray-200 px-4 py-2 text-xs font-medium uppercase tracking-wider text-gray-400">

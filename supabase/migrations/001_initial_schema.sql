@@ -1,5 +1,5 @@
 -- Tourney: Americano Tournament Manager
--- Initial database schema
+-- Complete database schema
 
 -- Profiles (extends Supabase Auth)
 create table profiles (
@@ -83,6 +83,11 @@ create policy "Tournament owners can add players"
     auth.uid() = (select created_by from tournaments where id = tournament_id)
   );
 
+create policy "Tournament owners can update players"
+  on players for update using (
+    auth.uid() = (select created_by from tournaments where id = tournament_id)
+  );
+
 create policy "Tournament owners can delete players"
   on players for delete using (
     auth.uid() = (select created_by from tournaments where id = tournament_id)
@@ -117,7 +122,8 @@ create policy "Tournament owners can update rounds"
 create table matches (
   id uuid primary key default gen_random_uuid(),
   round_id uuid not null references rounds(id) on delete cascade,
-  court_number int not null,
+  court_number int not null default 0,
+  court_name text,
   team1_score int not null default 0 check (team1_score >= 0 and team1_score <= 5),
   team2_score int not null default 0 check (team2_score >= 0 and team2_score <= 5),
   status text not null default 'pending' check (status in ('pending', 'in_progress', 'completed')),

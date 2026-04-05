@@ -763,9 +763,10 @@ function MatchupsTab({
     (d) => d.round.round_number === activeRound
   );
 
-  // Get courts already in use for this round (to show which are taken)
+  // Get courts in use across ALL rounds (in_progress matches occupy courts globally)
   const usedCourts = new Set(
-    (currentRoundData?.matches ?? [])
+    matchupData
+      .flatMap((rd) => rd.matches)
       .filter((m) => m.court_number > 0 && m.status === "in_progress")
       .map((m) => m.court_number)
   );

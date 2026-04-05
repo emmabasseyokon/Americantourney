@@ -885,7 +885,7 @@ function MatchupsTab({
   // Get courts already in use for this round (to show which are taken)
   const usedCourts = new Set(
     (currentRoundData?.matches ?? [])
-      .filter((m) => m.court_number > 0 && m.status !== "pending")
+      .filter((m) => m.court_number > 0 && m.status === "in_progress")
       .map((m) => m.court_number)
   );
 

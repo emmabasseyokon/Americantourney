@@ -2,13 +2,13 @@
 
 import { Button } from "@/components/ui/Button";
 import { useSupabase } from "@/components/providers/SupabaseProvider";
-import { generateRoundDraw, extractPairKeys } from "@/lib/draw/americano";
-import type { Tournament, Player, Round, Match, MatchPlayer } from "@/types/database";
+import { generateRoundDraw } from "@/lib/draw/americano";
+import type { Tournament, Player, Round } from "@/types/database";
 import { SkeletonCards } from "@/components/ui/Skeleton";
 import { Shuffle } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export default function DrawPage() {
   const { supabase } = useSupabase();
@@ -21,11 +21,7 @@ export default function DrawPage() {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  async function fetchData() {
+  const fetchData = useCallback(async function fetchData() {
     const [tRes, pRes, rRes] = await Promise.all([
       supabase.from("tournaments").select("*").eq("id", tournamentId).single(),
       supabase.from("players").select("*").eq("tournament_id", tournamentId),
@@ -38,7 +34,11 @@ export default function DrawPage() {
     setTournament(tRes.data);
     setPlayers(pRes.data ?? []);
     setRounds(rRes.data ?? []);
-  }
+  }, [supabase, tournamentId]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   async function handleGenerateRound() {
     if (!tournament) return;

@@ -25,76 +25,69 @@ export default function RoundPage() {
   const [scores, setScores] = useState<Record<string, number>>({});
 
   useEffect(() => {
+    async function fetchRoundData() {
+      const { data: round } = await supabase
+        .from("rounds")
+        .select("*")
+        .eq("tournament_id", tournamentId)
+        .eq("round_number", roundNum)
+        .single();
+
+      if (!round) {
+        setLoading(false);
+        return;
+      }
+
+      const { data: matchesData } = await supabase
+        .from("matches")
+        .select("*")
+        .eq("round_id", round.id)
+        .order("court_number");
+
+      if (!matchesData) {
+        setLoading(false);
+        return;
+      }
+
+      const matchIds = matchesData.map((m) => m.id);
+      const { data: matchPlayers } = await supabase
+        .from("match_players")
+        .select("*")
+        .in("match_id", matchIds);
+
+      const { data: players } = await supabase
+        .from("players")
+        .select("*")
+        .eq("tournament_id", tournamentId);
+
+      const playerMap = new Map((players ?? []).map((p) => [p.id, p]));
+
+      const enriched: MatchWithPlayers[] = matchesData.map((match) => {
+        const mps = (matchPlayers ?? []).filter((mp) => mp.match_id === match.id);
+        return {
+          ...match,
+          team1Players: mps
+            .filter((mp) => mp.team === 1)
+            .map((mp) => playerMap.get(mp.player_id)!)
+            .filter(Boolean),
+          team2Players: mps
+            .filter((mp) => mp.team === 2)
+            .map((mp) => playerMap.get(mp.player_id)!)
+            .filter(Boolean),
+        };
+      });
+
+      setMatches(enriched);
+
+      const scoreMap: Record<string, number> = {};
+      for (const m of enriched) {
+        scoreMap[m.id] = m.team1_score;
+      }
+      setScores(scoreMap);
+      setLoading(false);
+    }
     fetchRoundData();
-  }, []);
-
-  async function fetchRoundData() {
-    // Get the round
-    const { data: round } = await supabase
-      .from("rounds")
-      .select("*")
-      .eq("tournament_id", tournamentId)
-      .eq("round_number", roundNum)
-      .single();
-
-    if (!round) {
-      setLoading(false);
-      return;
-    }
-
-    // Get matches for this round
-    const { data: matchesData } = await supabase
-      .from("matches")
-      .select("*")
-      .eq("round_id", round.id)
-      .order("court_number");
-
-    if (!matchesData) {
-      setLoading(false);
-      return;
-    }
-
-    // Get all match players
-    const matchIds = matchesData.map((m) => m.id);
-    const { data: matchPlayers } = await supabase
-      .from("match_players")
-      .select("*")
-      .in("match_id", matchIds);
-
-    // Get all tournament players
-    const { data: players } = await supabase
-      .from("players")
-      .select("*")
-      .eq("tournament_id", tournamentId);
-
-    const playerMap = new Map((players ?? []).map((p) => [p.id, p]));
-
-    // Build matches with players
-    const enriched: MatchWithPlayers[] = matchesData.map((match) => {
-      const mps = (matchPlayers ?? []).filter((mp) => mp.match_id === match.id);
-      return {
-        ...match,
-        team1Players: mps
-          .filter((mp) => mp.team === 1)
-          .map((mp) => playerMap.get(mp.player_id)!)
-          .filter(Boolean),
-        team2Players: mps
-          .filter((mp) => mp.team === 2)
-          .map((mp) => playerMap.get(mp.player_id)!)
-          .filter(Boolean),
-      };
-    });
-
-    setMatches(enriched);
-
-    // Init scores from existing data
-    const scoreMap: Record<string, number> = {};
-    for (const m of enriched) {
-      scoreMap[m.id] = m.team1_score;
-    }
-    setScores(scoreMap);
-    setLoading(false);
-  }
+  }, [supabase, tournamentId, roundNum]);
 
   async function handleSaveScore(matchId: string) {
     const team1Score = scores[matchId] ?? 0;

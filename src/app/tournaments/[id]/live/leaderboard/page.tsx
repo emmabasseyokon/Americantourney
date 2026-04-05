@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/client";
 import { SkeletonTable } from "@/components/ui/Skeleton";
-import type { Player, Round, Match } from "@/types/database";
+import type { Player } from "@/types/database";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -109,7 +109,7 @@ export default function LiveLeaderboardPage() {
     }
 
     fetchLeaderboard();
-  }, []);
+  }, [supabase, tournamentId]);
 
   if (loading) {
     return <SkeletonTable rows={6} cols={5} />;

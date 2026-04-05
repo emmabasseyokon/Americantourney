@@ -27,7 +27,7 @@ import {
   MoreVertical,
 } from "lucide-react";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 type Tab = "players" | "matchups" | "rankings";
 
@@ -69,20 +69,7 @@ export default function TournamentDetailPage() {
     { player: Player; roundScores: Record<number, number>; total: number }[]
   >([]);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  useEffect(() => {
-    if (activeTab === "matchups" && rounds.length > 0) {
-      fetchMatchups();
-    }
-    if (activeTab === "rankings") {
-      fetchRankings();
-    }
-  }, [activeTab, rounds]);
-
-  async function fetchData() {
+  const fetchData = useCallback(async function fetchData() {
     const [tRes, pRes, rRes] = await Promise.all([
       supabase.from("tournaments").select("*").eq("id", tournamentId).single(),
       supabase
@@ -100,9 +87,9 @@ export default function TournamentDetailPage() {
     setPlayers(pRes.data ?? []);
     setRounds(rRes.data ?? []);
     setLoading(false);
-  }
+  }, [supabase, tournamentId]);
 
-  async function fetchMatchups() {
+  const fetchMatchups = useCallback(async function fetchMatchups() {
     if (rounds.length === 0) return;
 
     const roundIds = rounds.map((r) => r.id);
@@ -148,9 +135,9 @@ export default function TournamentDetailPage() {
     });
 
     setMatchupData(grouped);
-  }
+  }, [supabase, rounds, players]);
 
-  async function fetchRankings() {
+  const fetchRankings = useCallback(async function fetchRankings() {
     if (rounds.length === 0) {
       setRankings(
         players.map((p) => ({ player: p, roundScores: {}, total: 0 }))
@@ -209,7 +196,20 @@ export default function TournamentDetailPage() {
     });
 
     setRankings(rows);
-  }
+  }, [supabase, rounds, players]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  useEffect(() => {
+    if (activeTab === "matchups" && rounds.length > 0) {
+      fetchMatchups();
+    }
+    if (activeTab === "rankings") {
+      fetchRankings();
+    }
+  }, [activeTab, rounds, fetchMatchups, fetchRankings]);
 
   async function handleAddPlayer(e: React.FormEvent) {
     e.preventDefault();
@@ -502,8 +502,6 @@ export default function TournamentDetailPage() {
         {activeTab === "players" && (
           <PlayersTab
             players={players}
-            isFull={isFull}
-            maxPlayers={tournament.max_players}
             onEdit={handleEditPlayer}
             onDelete={handleDeletePlayer}
           />
@@ -680,14 +678,10 @@ function TabButton({
 /* ─── Players Tab ─── */
 function PlayersTab({
   players,
-  isFull,
-  maxPlayers,
   onEdit,
   onDelete,
 }: {
   players: Player[];
-  isFull: boolean;
-  maxPlayers: number;
   onEdit: (player: Player) => void;
   onDelete: (id: string) => void;
 }) {
@@ -878,7 +872,6 @@ function MatchupsTab({
   const [saving, setSaving] = useState(false);
 
   const team1Score = team1Input === "" ? null : Math.min(5, Math.max(0, parseInt(team1Input) || 0));
-  const team2Score = team1Score !== null ? 5 - team1Score : (team2Input === "" ? null : Math.min(5, Math.max(0, parseInt(team2Input) || 0)));
 
   const roundTabs = Array.from(
     { length: tournament.total_rounds },

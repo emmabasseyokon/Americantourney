@@ -25,21 +25,20 @@ export default function PlayersPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    async function fetchData() {
+      const [tournamentRes, playersRes] = await Promise.all([
+        supabase.from("tournaments").select("*").eq("id", tournamentId).single(),
+        supabase
+          .from("players")
+          .select("*")
+          .eq("tournament_id", tournamentId)
+          .order("created_at"),
+      ]);
+      setTournament(tournamentRes.data);
+      setPlayers(playersRes.data ?? []);
+    }
     fetchData();
-  }, []);
-
-  async function fetchData() {
-    const [tournamentRes, playersRes] = await Promise.all([
-      supabase.from("tournaments").select("*").eq("id", tournamentId).single(),
-      supabase
-        .from("players")
-        .select("*")
-        .eq("tournament_id", tournamentId)
-        .order("created_at"),
-    ]);
-    setTournament(tournamentRes.data);
-    setPlayers(playersRes.data ?? []);
-  }
+  }, [supabase, tournamentId]);
 
   async function handleAddPlayer(e: React.FormEvent) {
     e.preventDefault();

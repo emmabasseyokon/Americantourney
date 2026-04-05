@@ -86,7 +86,7 @@ export default function LiveRoundPage() {
     }
 
     fetchData();
-  }, [roundNum]);
+  }, [supabase, tournamentId, roundNum]);
 
   if (loading) {
     return <SkeletonCards count={4} />;

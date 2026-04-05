@@ -23,16 +23,14 @@ const SupabaseContext = createContext<SupabaseContextType | undefined>(
 export function SupabaseProvider({ children }: { children: ReactNode }) {
   const [supabase] = useState(() => createClient());
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const hasEnvVars = !!(
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  );
+  const [loading, setLoading] = useState(hasEnvVars);
 
   useEffect(() => {
-    if (
-      !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-      !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    ) {
-      setLoading(false);
-      return;
-    }
+    if (!hasEnvVars) return;
 
     const {
       data: { subscription },
@@ -42,7 +40,7 @@ export function SupabaseProvider({ children }: { children: ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, [supabase]);
+  }, [supabase, hasEnvVars]);
 
   return (
     <SupabaseContext.Provider value={{ supabase, user, loading }}>

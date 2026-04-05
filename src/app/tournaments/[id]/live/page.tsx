@@ -7,7 +7,6 @@ import {
   ClipboardList,
   Swords,
   BarChart3,
-  Trophy,
 } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -39,47 +38,38 @@ export default function LiveTournamentPage() {
   >([]);
 
   useEffect(() => {
+    async function fetchData() {
+      const [tRes, pRes, rRes] = await Promise.all([
+        supabase.from("tournaments").select("*").eq("id", tournamentId).single(),
+        supabase
+          .from("players")
+          .select("*")
+          .eq("tournament_id", tournamentId)
+          .order("created_at"),
+        supabase
+          .from("rounds")
+          .select("*")
+          .eq("tournament_id", tournamentId)
+          .order("round_number"),
+      ]);
+      setTournament(tRes.data);
+      setPlayers(pRes.data ?? []);
+      setRounds(rRes.data ?? []);
+      setLoading(false);
+    }
     fetchData();
-  }, []);
+  }, [supabase, tournamentId]);
 
   useEffect(() => {
-    if (activeTab === "matchups" && rounds.length > 0) {
-      fetchMatchups();
-    }
-    if (activeTab === "rankings") {
-      fetchRankings();
-    }
-  }, [activeTab, rounds]);
+    async function fetchMatchups() {
+      if (rounds.length === 0) return;
 
-  async function fetchData() {
-    const [tRes, pRes, rRes] = await Promise.all([
-      supabase.from("tournaments").select("*").eq("id", tournamentId).single(),
-      supabase
-        .from("players")
+      const roundIds = rounds.map((r) => r.id);
+      const { data: matches } = await supabase
+        .from("matches")
         .select("*")
-        .eq("tournament_id", tournamentId)
-        .order("created_at"),
-      supabase
-        .from("rounds")
-        .select("*")
-        .eq("tournament_id", tournamentId)
-        .order("round_number"),
-    ]);
-    setTournament(tRes.data);
-    setPlayers(pRes.data ?? []);
-    setRounds(rRes.data ?? []);
-    setLoading(false);
-  }
-
-  async function fetchMatchups() {
-    if (rounds.length === 0) return;
-
-    const roundIds = rounds.map((r) => r.id);
-    const { data: matches } = await supabase
-      .from("matches")
-      .select("*")
-      .in("round_id", roundIds)
-      .order("court_number");
+        .in("round_id", roundIds)
+        .order("court_number");
 
     if (!matches || matches.length === 0) {
       setMatchupData([]);
@@ -116,10 +106,10 @@ export default function LiveTournamentPage() {
       return { round, matches: roundMatches };
     });
 
-    setMatchupData(grouped);
-  }
+      setMatchupData(grouped);
+    }
 
-  async function fetchRankings() {
+    async function fetchRankings() {
     if (rounds.length === 0) {
       setRankings(
         players.map((p) => ({ player: p, roundScores: {}, total: 0 }))
@@ -177,8 +167,16 @@ export default function LiveTournamentPage() {
       return a.player.name.localeCompare(b.player.name);
     });
 
-    setRankings(rows);
-  }
+      setRankings(rows);
+    }
+
+    if (activeTab === "matchups" && rounds.length > 0) {
+      fetchMatchups();
+    }
+    if (activeTab === "rankings") {
+      fetchRankings();
+    }
+  }, [activeTab, rounds, players, supabase]);
 
   if (loading || !tournament) {
     return (

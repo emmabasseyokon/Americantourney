@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SupabaseProvider } from "@/components/providers/SupabaseProvider";
 import { Navbar } from "@/components/layout/Navbar";
@@ -19,7 +19,6 @@ export const metadata: Metadata = {
   description:
     "Create and manage Americano tournaments with balanced, fair draws.",
   manifest: "/manifest.json",
-  themeColor: "#2563eb",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -28,6 +27,10 @@ export const metadata: Metadata = {
   other: {
     "mobile-web-app-capable": "yes",
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#2563eb",
 };
 
 export default function RootLayout({

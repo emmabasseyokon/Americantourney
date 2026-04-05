@@ -9,12 +9,12 @@ import {
   BarChart3,
 } from "lucide-react";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type Tab = "players" | "matchups" | "rankings";
 
 export default function LiveTournamentPage() {
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const params = useParams();
   const tournamentId = params.id as string;
 

@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/client";
 import { SkeletonTable } from "@/components/ui/Skeleton";
 import type { Player } from "@/types/database";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 interface LeaderboardRow {
   player: Player;
@@ -13,7 +13,7 @@ interface LeaderboardRow {
 }
 
 export default function LiveLeaderboardPage() {
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const params = useParams();
   const tournamentId = params.id as string;
 

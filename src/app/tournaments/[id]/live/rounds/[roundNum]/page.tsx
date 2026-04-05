@@ -6,7 +6,7 @@ import type { Player, Match } from "@/types/database";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 interface MatchWithPlayers extends Match {
   team1Players: Player[];
@@ -14,7 +14,7 @@ interface MatchWithPlayers extends Match {
 }
 
 export default function LiveRoundPage() {
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const params = useParams();
   const tournamentId = params.id as string;
   const roundNum = parseInt(params.roundNum as string);

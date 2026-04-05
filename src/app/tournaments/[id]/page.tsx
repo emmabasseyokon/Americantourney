@@ -967,12 +967,55 @@ function MatchupsTab({
   if (previewDraws && rounds.length === 0) {
     const previewRound = previewDraws.find((d) => d.roundNumber === activeRound);
 
+    // Detect repeat pairings across all preview rounds
+    const repeatPairings: { round: number; player1: string; player2: string }[] = [];
+    const seenPairs = new Map<string, number>(); // pairKey → first round number
+    for (const draw of previewDraws) {
+      for (const matchDraw of draw.matches) {
+        const pairs = [
+          { p1: matchDraw.team1.player1, p2: matchDraw.team1.player2 },
+          { p1: matchDraw.team2.player1, p2: matchDraw.team2.player2 },
+        ];
+        for (const { p1, p2 } of pairs) {
+          const key = [p1.id, p2.id].sort().join(":");
+          const firstRound = seenPairs.get(key);
+          if (firstRound !== undefined) {
+            const name1 = playerMap.get(p1.id)?.name ?? p1.name;
+            const name2 = playerMap.get(p2.id)?.name ?? p2.name;
+            repeatPairings.push({ round: draw.roundNumber, player1: name1, player2: name2 });
+          } else {
+            seenPairs.set(key, draw.roundNumber);
+          }
+        }
+      }
+    }
+
     return (
       <div>
         {/* Preview banner */}
         <div className="mx-4 mt-4 rounded-lg bg-amber-50 border border-amber-200 p-3 text-sm text-amber-700">
           Preview — regenerate if unhappy, or lock to confirm draws.
         </div>
+
+        {/* Repeat pairings alert */}
+        {repeatPairings.length > 0 && (
+          <div className="mx-4 mt-3 rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">
+            <p className="font-semibold mb-1">
+              {repeatPairings.length} repeat pairing{repeatPairings.length > 1 ? "s" : ""} detected:
+            </p>
+            <ul className="list-disc pl-4 space-y-0.5">
+              {repeatPairings.map((rp, i) => (
+                <li key={i}>
+                  <span className="font-medium uppercase">{rp.player1}</span>
+                  {" & "}
+                  <span className="font-medium uppercase">{rp.player2}</span>
+                  {" — Round "}
+                  {rp.round}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {/* Round Tabs */}
         <div className="flex border-b border-gray-200 bg-white overflow-x-auto mt-3">

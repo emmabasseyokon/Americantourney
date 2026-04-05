@@ -905,12 +905,12 @@ function MatchupsTab({
     }
   }
 
-  // Build set of player IDs whose previous-round match is NOT completed
+  // Build set of player IDs whose previous-round match is in progress (actively on court)
   const playerNotReady = new Set<string>();
   for (const rd of matchupData) {
     if (rd.round.round_number >= activeRound) continue;
     for (const m of rd.matches) {
-      if (m.status === "completed") continue;
+      if (m.status !== "in_progress") continue;
       for (const p of [...m.team1Players, ...m.team2Players]) {
         playerNotReady.add(p.id);
       }

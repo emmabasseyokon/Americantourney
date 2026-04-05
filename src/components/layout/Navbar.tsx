@@ -26,7 +26,7 @@ export function Navbar() {
     <nav className="border-b border-gray-200 bg-white">
       <div className="mx-auto max-w-6xl px-4">
         <div className="flex h-14 items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 font-bold text-gray-900">
+          <Link href={user ? "/dashboard" : "/"} className="flex items-center gap-2 font-bold text-gray-900">
             <Trophy className="h-5 w-5 text-blue-600" />
             Tourney
           </Link>

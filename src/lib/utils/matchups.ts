@@ -45,6 +45,16 @@ export function enrichMatchups(
             .filter(Boolean),
         };
       });
+    // Sort: in_progress first, then pending (ready), then completed
+    const statusOrder: Record<string, number> = {
+      in_progress: 0,
+      pending: 1,
+      completed: 2,
+    };
+    roundMatches.sort(
+      (a, b) => (statusOrder[a.status] ?? 1) - (statusOrder[b.status] ?? 1)
+    );
+
     return { round, matches: roundMatches };
   });
 }

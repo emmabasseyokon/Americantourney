@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { useSupabase } from "@/components/providers/SupabaseProvider";
 import { generateRoundDraw } from "@/lib/draw/americano";
-import type { RoundDraw } from "@/lib/draw/types";
+import type { RoundDraw, RelaxationLevel } from "@/lib/draw/types";
 import type {
   Tournament,
   Player,
@@ -844,6 +844,29 @@ function MatchupsTab({
         <div className="mx-4 mt-4 rounded-lg bg-amber-50 border border-amber-200 p-3 text-sm text-amber-700">
           Preview — regenerate if unhappy, or lock to confirm draws.
         </div>
+
+        {/* Relaxation warning */}
+        {(() => {
+          const relaxedRounds = previewDraws.filter((d) => d.relaxation !== "none");
+          if (relaxedRounds.length === 0) return null;
+          const maxLevel: RelaxationLevel = relaxedRounds.some((d) => d.relaxation === "close_class")
+            ? "close_class"
+            : "same_class";
+          return (
+            <div className="mx-4 mt-3 rounded-lg bg-orange-50 border border-orange-200 p-3 text-sm text-orange-700">
+              <p className="font-semibold mb-1">Pairing rules relaxed</p>
+              <p>
+                {maxLevel === "same_class"
+                  ? "Some same-classification pairings were required due to limited classification diversity."
+                  : "Same-classification and close-classification (A+/A, A+/B+) pairings were required due to limited classification diversity."}
+              </p>
+              <p className="mt-1 text-xs text-orange-500">
+                Affected round{relaxedRounds.length > 1 ? "s" : ""}:{" "}
+                {relaxedRounds.map((d) => d.roundNumber).join(", ")}
+              </p>
+            </div>
+          );
+        })()}
 
         {/* Repeat pairings alert */}
         {repeatPairings.length > 0 && (

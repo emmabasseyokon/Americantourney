@@ -2,6 +2,7 @@ import type { Player } from "@/types/database";
 import {
   CLASSIFICATION_STRENGTH,
   type MatchDraw,
+  type RelaxationLevel,
   type RoundDraw,
   type Team,
 } from "./types";
@@ -26,58 +27,78 @@ function pairKey(a: string, b: string): string {
 }
 
 /**
- * Check if two players are forbidden from pairing as teammates.
- * Hard rules (never violated):
- * 1. Two females cannot pair (regardless of classification)
- * 2. Same classification cannot pair (A+/A+, A/A, B/B, B+/B+, C/C, C+/C+)
- * 3. A+ cannot pair with A
- * 4. A+ cannot pair with B+
+ * Check if two players are forbidden from pairing as teammates
+ * at the given relaxation level.
+ *
+ * Relaxation levels (progressive):
+ * - "none"        → all hard rules enforced
+ * - "same_class"  → allow same classification to pair (A+/A+, B/B, etc.)
+ * - "close_class" → also allow A+/A and A+/B+ to pair
+ *
+ * The two-females rule is NEVER relaxed.
  */
-function isForbiddenPairing(p1: Player, p2: Player): boolean {
+function isForbiddenPairing(
+  p1: Player,
+  p2: Player,
+  relaxation: RelaxationLevel = "none"
+): boolean {
+  // NEVER relaxed: two females cannot pair
   if (p1.gender === "female" && p2.gender === "female") return true;
-  if (p1.classification === p2.classification) return true;
+
+  // At "close_class" level, only the two-females rule remains
+  if (relaxation === "close_class") return false;
+
   const sorted = [p1.classification, p2.classification].sort();
+
+  // At "same_class" level, allow same classification but still block A+/A and A+/B+
+  if (relaxation === "same_class") {
+    if (sorted[0] === "A" && sorted[1] === "A+") return true;
+    if (sorted[0] === "A+" && sorted[1] === "B+") return true;
+    return false;
+  }
+
+  // "none" — all hard rules enforced
+  if (p1.classification === p2.classification) return true;
   if (sorted[0] === "A" && sorted[1] === "A+") return true;
   if (sorted[0] === "A+" && sorted[1] === "B+") return true;
   return false;
 }
 
 /**
- * Generate teams with constraints:
- * 1. Two females CANNOT pair together (hard rule)
- * 2. Same classification CANNOT pair (hard rule)
- * 3. A+ CANNOT pair A (hard rule)
- * 4. Females pair with higher-classified males for balance
- * 5. Male+male is allowed when there are more males than females
- * 6. Avoid repeat partnerships from prior rounds (soft preference)
+ * Generate teams with progressive constraint relaxation:
  *
- * Uses retry logic — reshuffles and retries if pairing fails,
- * rather than breaking hard rules.
+ * Level 1: All hard rules + no repeat pairs (50 attempts)
+ * Level 2: Relax same-classification rule + no repeats (50 attempts)
+ * Level 3: Relax A+/A and A+/B+ rules + no repeats (50 attempts)
+ *
+ * The two-females rule and no-repeat-pairings rule are NEVER relaxed.
+ *
+ * Returns { teams, relaxation } so the caller knows what was relaxed.
  */
 function generateTeams(
   players: Player[],
   usedPairs: Set<string>
-): Team[] {
+): { teams: Team[]; relaxation: RelaxationLevel } {
   const MAX_ATTEMPTS = 50;
 
-  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-    const result = tryGenerateTeams(players, usedPairs, attempt > 0);
-    if (result) return result;
+  const levels: RelaxationLevel[] = ["none", "same_class", "close_class"];
+
+  for (const relaxation of levels) {
+    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+      const result = tryGenerateTeams(players, usedPairs, relaxation);
+      if (result) return { teams: result, relaxation };
+    }
   }
 
-  // Final fallback: allow repeat pairs but never break hard rules
-  const result = tryGenerateTeams(players, usedPairs, true);
-  if (result) return result;
-
   throw new Error(
-    "Cannot generate valid teams. Check player classifications — hard rules (same class, A+/A, two females) may make pairing impossible with this player set."
+    "Cannot generate valid teams. The two-females rule prevents pairing with this player set."
   );
 }
 
 function tryGenerateTeams(
   players: Player[],
   usedPairs: Set<string>,
-  allowRepeats: boolean
+  relaxation: RelaxationLevel
 ): Team[] | null {
   const females = shuffle(players.filter((p) => p.gender === "female"));
   const males = shuffle(players.filter((p) => p.gender === "male"));
@@ -85,29 +106,16 @@ function tryGenerateTeams(
   const teams: Team[] = [];
   const paired = new Set<string>();
 
-  // Step 1: Pair each female with a male
+  // Step 1: Pair each female with a male (no repeats, no forbidden pairings)
   for (const female of females) {
     let bestMatch: Player | null = null;
 
-    // Try: valid classification + not a repeat pair
-    if (!allowRepeats) {
-      for (const male of males) {
-        if (paired.has(male.id)) continue;
-        if (isForbiddenPairing(male, female)) continue;
-        if (usedPairs.has(pairKey(male.id, female.id))) continue;
-        bestMatch = male;
-        break;
-      }
-    }
-
-    // Fallback: valid classification (allow repeat pair)
-    if (!bestMatch) {
-      for (const male of males) {
-        if (paired.has(male.id)) continue;
-        if (isForbiddenPairing(male, female)) continue;
-        bestMatch = male;
-        break;
-      }
+    for (const male of males) {
+      if (paired.has(male.id)) continue;
+      if (isForbiddenPairing(male, female, relaxation)) continue;
+      if (usedPairs.has(pairKey(male.id, female.id))) continue;
+      bestMatch = male;
+      break;
     }
 
     // No valid partner found — this shuffle failed
@@ -124,7 +132,7 @@ function tryGenerateTeams(
     paired.add(female.id);
   }
 
-  // Step 2: Pair remaining males with each other
+  // Step 2: Pair remaining males with each other (no repeats, no forbidden pairings)
   const remainingMales = shuffle(males.filter((m) => !paired.has(m.id)));
   const usedRemaining = new Set<number>();
 
@@ -133,25 +141,12 @@ function tryGenerateTeams(
     const player1 = remainingMales[i];
     let foundIdx = -1;
 
-    // Try: valid classification + not a repeat pair
-    if (!allowRepeats) {
-      for (let j = i + 1; j < remainingMales.length; j++) {
-        if (usedRemaining.has(j)) continue;
-        if (isForbiddenPairing(player1, remainingMales[j])) continue;
-        if (usedPairs.has(pairKey(player1.id, remainingMales[j].id))) continue;
-        foundIdx = j;
-        break;
-      }
-    }
-
-    // Fallback: valid classification (allow repeat)
-    if (foundIdx === -1) {
-      for (let j = i + 1; j < remainingMales.length; j++) {
-        if (usedRemaining.has(j)) continue;
-        if (isForbiddenPairing(player1, remainingMales[j])) continue;
-        foundIdx = j;
-        break;
-      }
+    for (let j = i + 1; j < remainingMales.length; j++) {
+      if (usedRemaining.has(j)) continue;
+      if (isForbiddenPairing(player1, remainingMales[j], relaxation)) continue;
+      if (usedPairs.has(pairKey(player1.id, remainingMales[j].id))) continue;
+      foundIdx = j;
+      break;
     }
 
     // No valid partner — this shuffle failed
@@ -197,7 +192,7 @@ function formMatches(teams: Team[]): MatchDraw[] {
  * @param players - All players in the tournament
  * @param roundNumber - Current round number
  * @param pairingHistory - Set of pair keys from previous rounds
- * @returns The round draw with all matches
+ * @returns The round draw with all matches and relaxation level used
  */
 export function generateRoundDraw(
   players: Player[],
@@ -212,10 +207,10 @@ export function generateRoundDraw(
     throw new Error("Player count must be even for doubles.");
   }
 
-  const teams = generateTeams(players, pairingHistory);
+  const { teams, relaxation } = generateTeams(players, pairingHistory);
   const matches = formMatches(teams);
 
-  return { roundNumber, matches };
+  return { roundNumber, matches, relaxation };
 }
 
 /**

@@ -12,9 +12,17 @@ export interface MatchDraw {
   courtNumber: number;
 }
 
+/**
+ * Relaxation level applied when hard rules can't all be satisfied
+ * due to skewed classification distributions.
+ */
+export type RelaxationLevel = "none" | "same_class" | "close_class";
+
 export interface RoundDraw {
   roundNumber: number;
   matches: MatchDraw[];
+  /** Which relaxation level was needed for this round (if any). */
+  relaxation: RelaxationLevel;
 }
 
 export const CLASSIFICATION_STRENGTH: Record<Classification, number> = {

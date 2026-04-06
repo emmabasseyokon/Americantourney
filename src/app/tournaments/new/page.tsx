@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { useSupabase } from "@/components/providers/SupabaseProvider";
+import { sanitizeString } from "@/lib/utils/security";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -22,10 +23,17 @@ export default function NewTournamentPage() {
     setError("");
     setLoading(true);
 
+    const cleanName = sanitizeString(name, 100);
+    if (!cleanName) {
+      setError("Tournament name is required.");
+      setLoading(false);
+      return;
+    }
+
     const { data, error: dbError } = await supabase
       .from("tournaments")
       .insert({
-        name: name.trim(),
+        name: cleanName,
         total_rounds: parseInt(totalRounds),
         max_players: parseInt(maxPlayers),
         status: "registration",

@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { createClient } from "@/lib/supabase/client";
+import { checkRateLimit } from "@/lib/utils/security";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -18,10 +19,17 @@ export default function LoginPage() {
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+
+    const { allowed, retryAfterSec } = checkRateLimit("login", 5, 60_000);
+    if (!allowed) {
+      setError(`Too many login attempts. Try again in ${retryAfterSec}s.`);
+      return;
+    }
+
     setLoading(true);
 
     const { error } = await supabase.auth.signInWithPassword({
-      email,
+      email: email.trim(),
       password,
     });
 

@@ -25,6 +25,7 @@ import {
   type MatchWithPlayers,
 } from "@/lib/utils/matchups";
 import { ordinal, getCourtLabel, getStatusLabel, getStatusColor } from "@/lib/utils/format";
+import { sanitizeString } from "@/lib/utils/security";
 import { SkeletonList } from "@/components/ui/Skeleton";
 import {
   ClipboardList,
@@ -127,11 +128,17 @@ export default function TournamentDetailPage() {
     setAddError("");
     setAddLoading(true);
 
+    const cleanName = sanitizeString(playerName, 50);
+    if (!cleanName) {
+      setAddError("Player name is required.");
+      return;
+    }
+
     const { data, error: dbError } = await supabase
       .from("players")
       .insert({
         tournament_id: tournamentId,
-        name: playerName.trim(),
+        name: cleanName,
         gender: playerGender,
         classification: playerClassification,
       })
@@ -164,10 +171,17 @@ export default function TournamentDetailPage() {
     setAddError("");
     setAddLoading(true);
 
+    const cleanName = sanitizeString(playerName, 50);
+    if (!cleanName) {
+      setAddError("Player name is required.");
+      setAddLoading(false);
+      return;
+    }
+
     const { error: dbError } = await supabase
       .from("players")
       .update({
-        name: playerName.trim(),
+        name: cleanName,
         gender: playerGender,
         classification: playerClassification,
       })
@@ -182,7 +196,7 @@ export default function TournamentDetailPage() {
     setPlayers(
       players.map((p) =>
         p.id === editingPlayer.id
-          ? { ...p, name: playerName.trim(), gender: playerGender, classification: playerClassification }
+          ? { ...p, name: cleanName, gender: playerGender, classification: playerClassification }
           : p
       )
     );

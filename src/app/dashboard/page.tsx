@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/Button";
 import { useSupabase } from "@/components/providers/SupabaseProvider";
 import type { Tournament } from "@/types/database";
 import { SkeletonList } from "@/components/ui/Skeleton";
+import { sanitizeString } from "@/lib/utils/security";
 import { Plus, MoreVertical, Trophy, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -57,10 +58,17 @@ export default function DashboardPage() {
     setError("");
     setCreating(true);
 
+    const cleanName = sanitizeString(name, 100);
+    if (!cleanName) {
+      setError("Tournament name is required.");
+      setCreating(false);
+      return;
+    }
+
     const { data, error: dbError } = await supabase
       .from("tournaments")
       .insert({
-        name: name.trim(),
+        name: cleanName,
         total_rounds: parseInt(totalRounds),
         max_players: parseInt(maxPlayers),
         status: "registration",
@@ -84,10 +92,17 @@ export default function DashboardPage() {
     setEditError("");
     setEditSaving(true);
 
+    const cleanName = sanitizeString(editName, 100);
+    if (!cleanName) {
+      setEditError("Tournament name is required.");
+      setEditSaving(false);
+      return;
+    }
+
     const { error: dbError } = await supabase
       .from("tournaments")
       .update({
-        name: editName.trim(),
+        name: cleanName,
         total_rounds: parseInt(editRounds),
         max_players: parseInt(editPlayers),
       })
@@ -102,7 +117,7 @@ export default function DashboardPage() {
     setTournaments((prev) =>
       prev.map((t) =>
         t.id === editingTournament.id
-          ? { ...t, name: editName.trim(), total_rounds: parseInt(editRounds) as 3 | 4 | 5, max_players: parseInt(editPlayers) as 8 | 16 | 32 | 64 }
+          ? { ...t, name: cleanName, total_rounds: parseInt(editRounds) as 3 | 4 | 5, max_players: parseInt(editPlayers) as 8 | 16 | 32 | 64 }
           : t
       )
     );

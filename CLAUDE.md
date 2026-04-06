@@ -39,7 +39,8 @@ src/
 │   └── utils/
 │       ├── cn.ts                # Tailwind class merge helper
 │       ├── format.ts            # Shared: ordinal(), getCourtLabel(), getStatusLabel(), getStatusColor()
-│       └── matchups.ts          # Shared: match enrichment, rankings, player status helpers
+│       ├── matchups.ts          # Shared: match enrichment, rankings, player status helpers
+│       └── security.ts          # sanitizeString(), checkRateLimit()
 └── types/
     └── database.ts              # All TypeScript types
 ```
@@ -90,6 +91,14 @@ src/
 - Admin can **Regenerate** for new random pairings or **Lock** to save to DB
 - Algorithm uses retry logic (50 attempts per relaxation level) with progressive rule relaxation
 - Once locked, tournament edit (name/players/rounds) is disabled
+
+## Security
+- **Rate limiting:** Client-side on login (5 attempts/min) and register (3 attempts/min) via `checkRateLimit()`
+- **Input sanitization:** All user text inputs (player names, tournament names, display names) sanitized via `sanitizeString()` — strips HTML tags, dangerous characters (`<>"'&`), trims, enforces max length
+- **Open redirect prevention:** `/auth/callback` validates `next` param is a safe relative path (starts with `/`, not `//`)
+- **Security headers** (set in middleware): `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy: camera=(), microphone=(), geolocation=()`
+- **RLS:** Every table has Row Level Security enabled with owner-based policies for write operations
+- **SQL injection:** Not applicable — Supabase JS client uses parameterized queries; DB `CHECK` constraints validate enums and score ranges
 
 ## Database
 6 tables in Supabase: `profiles`, `tournaments`, `players`, `rounds`, `matches`, `match_players`

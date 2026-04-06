@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/Badge";
 import { useSupabase } from "@/components/providers/SupabaseProvider";
 import type { Tournament, Player, Classification, Gender } from "@/types/database";
 import { SkeletonList } from "@/components/ui/Skeleton";
+import { sanitizeString } from "@/lib/utils/security";
 import { Trash2 } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -52,11 +53,17 @@ export default function PlayersPage() {
     setError("");
     setLoading(true);
 
+    const cleanName = sanitizeString(name, 50);
+    if (!cleanName) {
+      setError("Player name is required.");
+      return;
+    }
+
     const { data, error: dbError } = await supabase
       .from("players")
       .insert({
         tournament_id: tournamentId,
-        name: name.trim(),
+        name: cleanName,
         gender,
         classification,
       })

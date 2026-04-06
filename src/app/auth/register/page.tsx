@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { createClient } from "@/lib/supabase/client";
+import { checkRateLimit, sanitizeString } from "@/lib/utils/security";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -19,13 +20,27 @@ export default function RegisterPage() {
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+
+    const { allowed, retryAfterSec } = checkRateLimit("register", 3, 60_000);
+    if (!allowed) {
+      setError(`Too many attempts. Try again in ${retryAfterSec}s.`);
+      return;
+    }
+
     setLoading(true);
 
+    const cleanName = sanitizeString(displayName, 50);
+    if (!cleanName) {
+      setError("Display name is required.");
+      setLoading(false);
+      return;
+    }
+
     const { error } = await supabase.auth.signUp({
-      email,
+      email: email.trim(),
       password,
       options: {
-        data: { display_name: displayName },
+        data: { display_name: cleanName },
       },
     });
 

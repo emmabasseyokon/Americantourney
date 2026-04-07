@@ -39,7 +39,13 @@ export function Navbar() {
                   href="/dashboard"
                   className="text-sm text-gray-600 hover:text-gray-900"
                 >
-                  All Tournaments
+                  Tournaments
+                </Link>
+                <Link
+                  href="/scoreboards"
+                  className="text-sm text-gray-600 hover:text-gray-900"
+                >
+                  Scoreboards
                 </Link>
                 <Button variant="ghost" size="sm" onClick={handleLogout}>
                   Logout
@@ -71,7 +77,14 @@ export function Navbar() {
                   className="block px-2 py-1.5 text-sm text-gray-600 hover:text-gray-900"
                   onClick={() => setMenuOpen(false)}
                 >
-                  All Tournaments
+                  Tournaments
+                </Link>
+                <Link
+                  href="/scoreboards"
+                  className="block px-2 py-1.5 text-sm text-gray-600 hover:text-gray-900"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Scoreboards
                 </Link>
                 <button
                   onClick={handleLogout}

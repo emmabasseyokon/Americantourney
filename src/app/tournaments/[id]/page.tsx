@@ -364,8 +364,8 @@ export default function TournamentDetailPage() {
 
   if (loading || !tournament) {
     return (
-      <div className="flex flex-col h-[calc(100vh-3.5rem)] bg-white">
-        <div className="border-b border-gray-200 bg-white px-4 py-3">
+      <div className="flex flex-col h-[calc(100vh-3.5rem)] bg-surface">
+        <div className="border-b border-border-theme bg-surface px-4 py-3">
           <div className="h-5 w-40 animate-pulse rounded bg-gray-100" />
           <div className="mt-1 h-3 w-28 animate-pulse rounded bg-gray-100" />
         </div>
@@ -383,15 +383,15 @@ export default function TournamentDetailPage() {
   );
 
   return (
-    <div className="flex flex-col h-[calc(100vh-3.5rem)] bg-white">
+    <div className="flex flex-col h-[calc(100vh-3.5rem)] bg-surface">
       {/* Header */}
-      <div className="border-b border-gray-200 bg-white px-4 py-3">
+      <div className="border-b border-border-theme bg-surface px-4 py-3">
         <div className="mx-auto flex max-w-4xl items-center justify-between">
           <div>
-            <h1 className="text-lg font-bold text-gray-900">
+            <h1 className="text-lg font-bold text-text-primary">
               {tournament.name}
             </h1>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-text-muted">
               {players.length} Registered{" "}
               {tournament.max_players - players.length > 0
                 ? `${tournament.max_players - players.length} Remaining`
@@ -464,9 +464,9 @@ export default function TournamentDetailPage() {
       {/* Add/Edit Player Modal */}
       {showAddPlayer && (
         <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-black/40">
-          <div className="w-full max-w-md rounded-t-2xl sm:rounded-2xl bg-white p-6 shadow-xl">
+          <div className="w-full max-w-md rounded-t-2xl sm:rounded-2xl bg-surface p-6 shadow-xl">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-gray-900">
+              <h2 className="text-lg font-bold text-text-primary">
                 {editingPlayer ? "Edit Player" : "Add Player"}
               </h2>
               <button
@@ -476,7 +476,7 @@ export default function TournamentDetailPage() {
                   setPlayerName("");
                   setAddError("");
                 }}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-text-tertiary hover:text-text-secondary"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -543,7 +543,7 @@ export default function TournamentDetailPage() {
       )}
 
       {/* Bottom Nav */}
-      <nav className="fixed bottom-0 left-0 right-0 z-20 border-t border-gray-200 bg-white">
+      <nav className="fixed bottom-0 left-0 right-0 z-20 border-t border-border-theme bg-surface">
         <div className="mx-auto flex max-w-md">
           <TabButton
             active={activeTab === "players"}
@@ -585,7 +585,7 @@ function TabButton({
     <button
       onClick={onClick}
       className={`flex flex-1 flex-col items-center gap-0.5 py-2.5 text-xs font-medium transition-colors cursor-pointer ${
-        active ? "text-blue-600" : "text-gray-400 hover:text-gray-600"
+        active ? "text-blue-600" : "text-text-tertiary hover:text-text-secondary"
       }`}
     >
       {icon}
@@ -609,7 +609,7 @@ function PlayersTab({
 
   if (players.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+      <div className="flex flex-col items-center justify-center py-20 text-text-tertiary">
         <ClipboardList className="h-10 w-10 mb-2" />
         <p className="text-sm">No players registered yet</p>
       </div>
@@ -620,7 +620,7 @@ function PlayersTab({
     <div>
 
       {/* Table Header */}
-      <div className="grid grid-cols-[2.5rem_1fr_4rem_5rem_2rem] sm:grid-cols-[3rem_2fr_1fr_1fr_2.5rem] items-center border-b border-gray-200 px-4 py-2 text-xs font-medium uppercase tracking-wider text-gray-400">
+      <div className="grid grid-cols-[2.5rem_1fr_4rem_5rem_2rem] sm:grid-cols-[3rem_2fr_1fr_1fr_2.5rem] items-center border-b border-border-theme px-4 py-2 text-xs font-medium uppercase tracking-wider text-text-tertiary">
         <span>No.</span>
         <span>Name</span>
         <span>Class</span>
@@ -632,16 +632,16 @@ function PlayersTab({
       {players.map((player, index) => (
         <div
           key={player.id}
-          className="grid grid-cols-[2.5rem_1fr_4rem_5rem_2rem] sm:grid-cols-[3rem_2fr_1fr_1fr_2.5rem] items-center border-b border-gray-100 px-4 py-4"
+          className="grid grid-cols-[2.5rem_1fr_4rem_5rem_2rem] sm:grid-cols-[3rem_2fr_1fr_1fr_2.5rem] items-center border-b border-border-light px-4 py-4"
         >
-          <span className="text-sm text-gray-400">{index + 1}</span>
-          <span className="text-sm font-semibold text-gray-900 uppercase">
+          <span className="text-sm text-text-tertiary">{index + 1}</span>
+          <span className="text-sm font-semibold text-text-primary uppercase">
             {player.name}
           </span>
-          <span className="text-sm font-medium text-gray-700">
+          <span className="text-sm font-medium text-text-secondary">
             {player.classification}
           </span>
-          <span className="text-sm font-bold text-gray-900 uppercase">
+          <span className="text-sm font-bold text-text-primary uppercase">
             {player.gender}
           </span>
           <div className="relative">
@@ -649,7 +649,7 @@ function PlayersTab({
               onClick={() =>
                 setMenuOpen(menuOpen === player.id ? null : player.id)
               }
-              className="p-1 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+              className="p-1 text-text-tertiary hover:text-text-secondary transition-colors cursor-pointer"
             >
               <MoreVertical className="h-4 w-4" />
             </button>
@@ -660,13 +660,13 @@ function PlayersTab({
                   className="fixed inset-0 z-30"
                   onClick={() => setMenuOpen(null)}
                 />
-                <div className="absolute right-0 top-8 z-40 w-32 rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
+                <div className="absolute right-0 top-8 z-40 w-32 rounded-lg border border-border-theme bg-surface py-1 shadow-lg">
                   <button
                     onClick={() => {
                       onEdit(player);
                       setMenuOpen(null);
                     }}
-                    className="flex w-full items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                    className="flex w-full items-center px-4 py-2.5 text-sm text-text-secondary hover:bg-surface-secondary cursor-pointer"
                   >
                     Edit
                   </button>
@@ -675,7 +675,7 @@ function PlayersTab({
                       setConfirmDelete(player);
                       setMenuOpen(null);
                     }}
-                    className="flex w-full items-center px-4 py-2.5 text-sm text-red-600 hover:bg-gray-50 cursor-pointer"
+                    className="flex w-full items-center px-4 py-2.5 text-sm text-red-600 hover:bg-surface-secondary cursor-pointer"
                   >
                     Delete
                   </button>
@@ -689,15 +689,15 @@ function PlayersTab({
       {/* Delete Confirmation Modal */}
       {confirmDelete && (
         <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-black/40">
-          <div className="w-full max-w-sm rounded-t-2xl sm:rounded-lg bg-white p-6 shadow-xl">
-            <h2 className="text-lg font-bold text-gray-900">Delete player?</h2>
-            <p className="mt-2 text-sm text-gray-500">
+          <div className="w-full max-w-sm rounded-t-2xl sm:rounded-lg bg-surface p-6 shadow-xl">
+            <h2 className="text-lg font-bold text-text-primary">Delete player?</h2>
+            <p className="mt-2 text-sm text-text-muted">
               Are you sure you want to delete <strong>{confirmDelete.name}</strong>? This action cannot be undone.
             </p>
             <div className="mt-5 flex gap-3 justify-end">
               <button
                 onClick={() => setConfirmDelete(null)}
-                className="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
+                className="rounded-lg px-4 py-2 text-sm font-medium text-text-secondary hover:bg-gray-100 transition-colors cursor-pointer"
               >
                 Cancel
               </button>
@@ -903,7 +903,7 @@ function MatchupsTab({
         )}
 
         {/* Round Tabs */}
-        <div className="flex border-b border-gray-200 bg-white overflow-x-auto mt-3">
+        <div className="flex border-b border-border-theme bg-surface overflow-x-auto mt-3">
           {roundTabs.map((r) => (
             <button
               key={r}
@@ -911,7 +911,7 @@ function MatchupsTab({
               className={`flex-1 min-w-[5rem] py-3 text-center text-xs font-bold uppercase tracking-wide transition-colors cursor-pointer ${
                 activeRound === r
                   ? "text-blue-600 border-b-3 border-blue-600"
-                  : "text-gray-400 hover:text-gray-600"
+                  : "text-text-tertiary hover:text-text-secondary"
               }`}
             >
               Round {r}
@@ -925,7 +925,7 @@ function MatchupsTab({
             {previewRound?.matches.map((matchDraw, idx) => (
               <div
                 key={idx}
-                className="rounded-xl border border-dashed border-amber-300 bg-white p-4 shadow-sm"
+                className="rounded-xl border border-dashed border-amber-300 bg-surface p-4 shadow-sm"
               >
                 <div className="mb-3">
                   <span className="text-xs font-semibold uppercase tracking-wide text-amber-500">
@@ -939,17 +939,17 @@ function MatchupsTab({
                     -
                   </span>
                   <div className="flex items-center gap-1 text-sm">
-                    <span className="font-semibold text-gray-900 uppercase">
+                    <span className="font-semibold text-text-primary uppercase">
                       {playerMap.get(matchDraw.team1.player1.id)?.name ?? matchDraw.team1.player1.name}
                     </span>
-                    <span className="text-xs font-medium text-gray-500">
+                    <span className="text-xs font-medium text-text-muted">
                       ({matchDraw.team1.player1.classification})
                     </span>
-                    <span className="text-gray-400">/</span>
-                    <span className="font-semibold text-gray-900 uppercase">
+                    <span className="text-text-tertiary">/</span>
+                    <span className="font-semibold text-text-primary uppercase">
                       {playerMap.get(matchDraw.team1.player2.id)?.name ?? matchDraw.team1.player2.name}
                     </span>
-                    <span className="text-xs font-medium text-gray-500">
+                    <span className="text-xs font-medium text-text-muted">
                       ({matchDraw.team1.player2.classification})
                     </span>
                   </div>
@@ -961,17 +961,17 @@ function MatchupsTab({
                     -
                   </span>
                   <div className="flex items-center gap-1 text-sm">
-                    <span className="font-semibold text-gray-900 uppercase">
+                    <span className="font-semibold text-text-primary uppercase">
                       {playerMap.get(matchDraw.team2.player1.id)?.name ?? matchDraw.team2.player1.name}
                     </span>
-                    <span className="text-xs font-medium text-gray-500">
+                    <span className="text-xs font-medium text-text-muted">
                       ({matchDraw.team2.player1.classification})
                     </span>
-                    <span className="text-gray-400">/</span>
-                    <span className="font-semibold text-gray-900 uppercase">
+                    <span className="text-text-tertiary">/</span>
+                    <span className="font-semibold text-text-primary uppercase">
                       {playerMap.get(matchDraw.team2.player2.id)?.name ?? matchDraw.team2.player2.name}
                     </span>
-                    <span className="text-xs font-medium text-gray-500">
+                    <span className="text-xs font-medium text-text-muted">
                       ({matchDraw.team2.player2.classification})
                     </span>
                   </div>
@@ -985,7 +985,7 @@ function MatchupsTab({
         <div className="flex gap-3 px-4 pb-4">
           <button
             onClick={onCancelPreview}
-            className="flex-1 rounded-lg border border-gray-300 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
+            className="flex-1 rounded-lg border border-gray-300 py-2.5 text-sm font-medium text-text-secondary hover:bg-surface-secondary transition-colors cursor-pointer"
           >
             Cancel
           </button>
@@ -1018,8 +1018,8 @@ function MatchupsTab({
       <div className="px-4 py-4">
         {canGenerate ? (
           <div className="flex flex-col items-center justify-center py-16">
-            <Swords className="h-10 w-10 mb-3 text-gray-300" />
-            <p className="mb-4 text-sm text-gray-500">
+            <Swords className="h-10 w-10 mb-3 text-text-tertiary" />
+            <p className="mb-4 text-sm text-text-muted">
               Generate all {tournament.total_rounds} rounds at once
             </p>
             <Button onClick={onGeneratePreview}>
@@ -1031,7 +1031,7 @@ function MatchupsTab({
             )}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+          <div className="flex flex-col items-center justify-center py-20 text-text-tertiary">
             <Swords className="h-10 w-10 mb-2" />
             <p className="text-sm">
               Fill all {tournament.max_players} player slots first
@@ -1045,7 +1045,7 @@ function MatchupsTab({
   return (
     <div>
       {/* Round Tabs */}
-      <div className="flex border-b border-gray-200 bg-white overflow-x-auto">
+      <div className="flex border-b border-border-theme bg-surface overflow-x-auto">
         {roundTabs.map((r) => (
           <button
             key={r}
@@ -1053,7 +1053,7 @@ function MatchupsTab({
             className={`flex-1 min-w-[5rem] py-3 text-center text-xs font-bold uppercase tracking-wide transition-colors cursor-pointer ${
               activeRound === r
                 ? "text-blue-600 border-b-3 border-blue-600"
-                : "text-gray-400 hover:text-gray-600"
+                : "text-text-tertiary hover:text-text-secondary"
             }`}
           >
             Round {r}
@@ -1067,7 +1067,7 @@ function MatchupsTab({
           {currentRoundData?.matches.map((match) => (
             <div
               key={match.id}
-              className="relative rounded-xl border border-gray-100 bg-white p-4 shadow-md"
+              className="relative rounded-xl border border-border-light bg-surface p-4 shadow-md"
             >
               {/* Card Header — status left, court center-ish, 3-dot right */}
               <div className="flex items-center justify-between mb-3">
@@ -1083,7 +1083,7 @@ function MatchupsTab({
                     : getStatusLabel(match.status)}
                 </span>
                 {match.court_number > 0 && (
-                  <span className="text-xs font-medium text-gray-500">
+                  <span className="text-xs font-medium text-text-muted">
                     {getCourtLabel(match)}
                   </span>
                 )}
@@ -1092,7 +1092,7 @@ function MatchupsTab({
                     onClick={() =>
                       setMenuOpen(menuOpen === match.id ? null : match.id)
                     }
-                    className="p-1 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                    className="p-1 text-text-tertiary hover:text-text-secondary transition-colors cursor-pointer"
                   >
                     <MoreVertical className="h-4 w-4" />
                   </button>
@@ -1104,20 +1104,20 @@ function MatchupsTab({
                         className="fixed inset-0 z-30"
                         onClick={() => setMenuOpen(null)}
                       />
-                      <div className="absolute right-0 top-8 z-40 w-44 rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
+                      <div className="absolute right-0 top-8 z-40 w-44 rounded-lg border border-border-theme bg-surface py-1 shadow-lg">
                         {match.status === "pending" && !isMatchNotReady(match, playerNotReady) && (
                           <button
                             onClick={() => {
                               setCourtPickerMatch(match.id);
                               setMenuOpen(null);
                             }}
-                            className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                            className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-text-secondary hover:bg-surface-secondary cursor-pointer"
                           >
                             Start Match
                           </button>
                         )}
                         {match.status === "pending" && isMatchNotReady(match, playerNotReady) && (
-                          <span className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-gray-300">
+                          <span className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-text-tertiary">
                             Start Match
                           </span>
                         )}
@@ -1125,7 +1125,7 @@ function MatchupsTab({
                           <>
                             <button
                               onClick={() => handleClearCourt(match.id)}
-                              className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                              className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-text-secondary hover:bg-surface-secondary cursor-pointer"
                             >
                               Clear Court
                             </button>
@@ -1136,7 +1136,7 @@ function MatchupsTab({
                                 setTeam2Input("");
                                 setMenuOpen(null);
                               }}
-                              className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                              className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-text-secondary hover:bg-surface-secondary cursor-pointer"
                             >
                               Record Scores
                             </button>
@@ -1150,7 +1150,7 @@ function MatchupsTab({
                               setTeam2Input(String(match.team2_score));
                               setMenuOpen(null);
                             }}
-                            className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                            className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-text-secondary hover:bg-surface-secondary cursor-pointer"
                           >
                             Edit Scores
                           </button>
@@ -1178,11 +1178,11 @@ function MatchupsTab({
                 <div className="flex items-center gap-1 text-sm">
                   {match.team1Players.map((p, i) => (
                     <span key={p.id} className="flex items-center gap-1">
-                      {i > 0 && <span className="text-gray-400">/</span>}
-                      <span className="font-semibold text-gray-900 uppercase">
+                      {i > 0 && <span className="text-text-tertiary">/</span>}
+                      <span className="font-semibold text-text-primary uppercase">
                         {p.name}
                       </span>
-                      <span className="font-bold text-gray-500 text-xs">
+                      <span className="font-bold text-text-muted text-xs">
                         {p.classification}
                       </span>
                       {playerActiveCourt.has(p.id) && (
@@ -1212,11 +1212,11 @@ function MatchupsTab({
                 <div className="flex items-center gap-1 text-sm">
                   {match.team2Players.map((p, i) => (
                     <span key={p.id} className="flex items-center gap-1">
-                      {i > 0 && <span className="text-gray-400">/</span>}
-                      <span className="font-semibold text-gray-900 uppercase">
+                      {i > 0 && <span className="text-text-tertiary">/</span>}
+                      <span className="font-semibold text-text-primary uppercase">
                         {p.name}
                       </span>
-                      <span className="font-bold text-gray-500 text-xs">
+                      <span className="font-bold text-text-muted text-xs">
                         {p.classification}
                       </span>
                       {playerActiveCourt.has(p.id) && (
@@ -1233,7 +1233,7 @@ function MatchupsTab({
         </div>
 
         {!currentRoundData && (
-          <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+          <div className="flex flex-col items-center justify-center py-16 text-text-tertiary">
             <p className="text-sm">No matches for this round yet</p>
           </div>
         )}
@@ -1242,14 +1242,14 @@ function MatchupsTab({
       {/* Court Picker Modal */}
       {courtPickerMatch && (
         <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-black/40">
-          <div className="w-full max-w-sm rounded-t-2xl sm:rounded-2xl bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4">
-              <h2 className="text-base font-bold text-gray-900">
+          <div className="w-full max-w-sm rounded-t-2xl sm:rounded-2xl bg-surface shadow-xl">
+            <div className="flex items-center justify-between border-b border-border-theme px-5 py-4">
+              <h2 className="text-base font-bold text-text-primary">
                 Select venue for match
               </h2>
               <button
                 onClick={() => setCourtPickerMatch(null)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-text-tertiary hover:text-text-secondary"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -1266,13 +1266,13 @@ function MatchupsTab({
                     }
                     className={`flex w-full items-center justify-between px-5 py-3.5 text-sm transition-colors cursor-pointer ${
                       inUse
-                        ? "text-gray-300 cursor-not-allowed"
-                        : "text-gray-700 hover:bg-gray-50"
+                        ? "text-text-tertiary cursor-not-allowed"
+                        : "text-text-secondary hover:bg-surface-secondary"
                     }`}
                   >
                     <span>{court.label}</span>
                     {inUse && (
-                      <span className="text-xs text-gray-300">In use</span>
+                      <span className="text-xs text-text-tertiary">In use</span>
                     )}
                   </button>
                 );
@@ -1285,7 +1285,7 @@ function MatchupsTab({
       {/* Record Scores Modal */}
       {scoreModal && (
         <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-black/40">
-          <div className="w-full max-w-md rounded-t-2xl sm:rounded-2xl bg-white shadow-xl">
+          <div className="w-full max-w-md rounded-t-2xl sm:rounded-2xl bg-surface shadow-xl">
             {/* Blue header */}
             <div className="flex items-center justify-between bg-blue-600 px-5 py-4 rounded-t-2xl">
               <h2 className="text-base font-bold text-white">
@@ -1305,15 +1305,15 @@ function MatchupsTab({
                 <div className="flex items-center gap-1.5 text-sm mb-3">
                   {scoreModal.team1Players.map((p, i) => (
                     <span key={p.id} className="flex items-center gap-1">
-                      {i > 0 && <span className="text-gray-400">/</span>}
-                      <span className="font-semibold text-gray-900 uppercase">
+                      {i > 0 && <span className="text-text-tertiary">/</span>}
+                      <span className="font-semibold text-text-primary uppercase">
                         {p.name}
                       </span>
                     </span>
                   ))}
                 </div>
                 <div className="flex items-center gap-3 border-b-2 border-green-500 pb-2">
-                  <span className="text-sm text-gray-500">Score</span>
+                  <span className="text-sm text-text-muted">Score</span>
                   <input
                     type="text"
                     inputMode="numeric"
@@ -1329,7 +1329,7 @@ function MatchupsTab({
                       }
                     }}
                     placeholder="0"
-                    className="w-12 bg-transparent text-lg font-bold text-gray-900 outline-none"
+                    className="w-12 bg-transparent text-lg font-bold text-text-primary outline-none"
                   />
                 </div>
               </div>
@@ -1339,15 +1339,15 @@ function MatchupsTab({
                 <div className="flex items-center gap-1.5 text-sm mb-3">
                   {scoreModal.team2Players.map((p, i) => (
                     <span key={p.id} className="flex items-center gap-1">
-                      {i > 0 && <span className="text-gray-400">/</span>}
-                      <span className="font-semibold text-gray-900 uppercase">
+                      {i > 0 && <span className="text-text-tertiary">/</span>}
+                      <span className="font-semibold text-text-primary uppercase">
                         {p.name}
                       </span>
                     </span>
                   ))}
                 </div>
                 <div className="flex items-center gap-3 border-b-2 border-green-500 pb-2">
-                  <span className="text-sm text-gray-500">Score</span>
+                  <span className="text-sm text-text-muted">Score</span>
                   <input
                     type="text"
                     inputMode="numeric"
@@ -1363,7 +1363,7 @@ function MatchupsTab({
                       }
                     }}
                     placeholder="0"
-                    className="w-12 bg-transparent text-lg font-bold text-gray-900 outline-none"
+                    className="w-12 bg-transparent text-lg font-bold text-text-primary outline-none"
                   />
                 </div>
               </div>
@@ -1393,7 +1393,7 @@ function RankingsTab({
 }) {
   if (rankings.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+      <div className="flex flex-col items-center justify-center py-20 text-text-tertiary">
         <BarChart3 className="h-10 w-10 mb-2" />
         <p className="text-sm">No rankings yet</p>
       </div>
@@ -1401,10 +1401,10 @@ function RankingsTab({
   }
 
   return (
-    <div className="overflow-x-auto bg-white">
+    <div className="overflow-x-auto bg-surface">
       <table className="w-full text-left text-sm">
         <thead>
-          <tr className="border-b border-gray-200 text-xs uppercase tracking-wider text-gray-400">
+          <tr className="border-b border-border-theme text-xs uppercase tracking-wider text-text-tertiary">
             <th className="px-4 py-3 font-medium">#</th>
             <th className="px-4 py-3 font-medium">Player</th>
             <th className="px-4 py-3 font-medium">Class</th>
@@ -1420,28 +1420,28 @@ function RankingsTab({
           {rankings.map((row, index) => (
             <tr
               key={row.player.id}
-              className={`border-b border-gray-100 ${
+              className={`border-b border-border-light ${
                 index < 3 ? "bg-yellow-50/60" : ""
               }`}
             >
-              <td className="px-4 py-3 text-gray-400 font-medium">
+              <td className="px-4 py-3 text-text-tertiary font-medium">
                 {index + 1}
               </td>
-              <td className="px-4 py-3 font-semibold text-gray-900 uppercase">
+              <td className="px-4 py-3 font-semibold text-text-primary uppercase">
                 {row.player.name}
               </td>
-              <td className="px-4 py-3 font-medium text-gray-700">
+              <td className="px-4 py-3 font-medium text-text-secondary">
                 {row.player.classification}
               </td>
               {roundColumns.map((r) => (
-                <td key={r} className="px-3 py-3 text-center text-gray-600">
+                <td key={r} className="px-3 py-3 text-center text-text-secondary">
                   {row.roundScores[r] !== undefined
                     ? row.roundScores[r]
                     : "—"}
                 </td>
               ))}
-              <td className="px-4 py-3 text-center font-bold text-gray-900 whitespace-nowrap">
-                {row.total} <span className="text-xs font-medium text-gray-400">({ordinal(index + 1)})</span>
+              <td className="px-4 py-3 text-center font-bold text-text-primary whitespace-nowrap">
+                {row.total} <span className="text-xs font-medium text-text-tertiary">({ordinal(index + 1)})</span>
               </td>
             </tr>
           ))}

@@ -116,7 +116,7 @@ export default function ScoreboardAdminPage() {
         : null;
 
   return (
-    <div className="flex flex-col h-[calc(100vh-3.5rem)] bg-gray-50">
+    <div className="flex flex-col h-[calc(100vh-3.5rem)] bg-surface-secondary">
       {/* Header */}
       <div className="bg-green-600 px-4 py-3 flex items-center justify-between">
         <div>
@@ -149,17 +149,17 @@ export default function ScoreboardAdminPage() {
       {isComplete && (
         <div className="mx-4 mt-3 rounded-lg bg-amber-50 border border-amber-300 p-4 text-center">
           <Trophy className="h-8 w-8 text-amber-500 mx-auto mb-1" />
-          <p className="text-lg font-bold text-gray-900">{winnerName} wins!</p>
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-lg font-bold text-text-primary">{winnerName} wins!</p>
+          <p className="text-xs text-text-muted mt-1">
             {state.sets.map((s) => `${s.p1}-${s.p2}`).join(", ")}
           </p>
         </div>
       )}
 
       {/* Scoreboard */}
-      <div className="mx-4 mt-4 rounded-xl bg-white border border-gray-200 shadow-sm overflow-hidden">
+      <div className="mx-4 mt-4 rounded-xl bg-surface border border-border-theme shadow-sm overflow-hidden">
         {/* Score table header */}
-        <div className="grid grid-cols-[1fr_repeat(var(--sets),2.5rem)_3rem] bg-gray-50 border-b border-gray-200 text-center text-xs font-bold text-gray-400 uppercase tracking-wide"
+        <div className="grid grid-cols-[1fr_repeat(var(--sets),2.5rem)_3rem] bg-surface-secondary border-b border-border-theme text-center text-xs font-bold text-text-tertiary uppercase tracking-wide"
           style={{
             "--sets": Math.max(state.sets.length + (isComplete ? 0 : 1), scoreboard.best_of),
             gridTemplateColumns: `1fr repeat(${Math.max(state.sets.length + (isComplete ? 0 : 1), scoreboard.best_of)}, 2.5rem) 3rem`,
@@ -175,7 +175,7 @@ export default function ScoreboardAdminPage() {
 
         {/* Player 1 row */}
         <div
-          className="grid border-b border-gray-100 text-center items-center"
+          className="grid border-b border-border-light text-center items-center"
           style={{
             gridTemplateColumns: `1fr repeat(${Math.max(state.sets.length + (isComplete ? 0 : 1), scoreboard.best_of)}, 2.5rem) 3rem`,
           }}
@@ -184,7 +184,7 @@ export default function ScoreboardAdminPage() {
             {state.server === 1 && !isComplete && (
               <span className="h-2 w-2 rounded-full bg-green-500 flex-shrink-0" />
             )}
-            <span className={`text-sm font-semibold uppercase truncate ${state.matchWinner === 1 ? "text-green-700" : "text-gray-900"}`}>
+            <span className={`text-sm font-semibold uppercase truncate ${state.matchWinner === 1 ? "text-green-700" : "text-text-primary"}`}>
               {scoreboard.player1_name}
             </span>
             {state.matchWinner === 1 && (
@@ -192,18 +192,18 @@ export default function ScoreboardAdminPage() {
             )}
           </div>
           {state.sets.map((set, i) => (
-            <div key={i} className={`py-3 text-sm font-bold ${set.p1 > set.p2 ? "text-gray-900" : "text-gray-400"}`}>
+            <div key={i} className={`py-3 text-sm font-bold ${set.p1 > set.p2 ? "text-text-primary" : "text-text-tertiary"}`}>
               {set.p1}
             </div>
           ))}
           {!isComplete && (
-            <div className="py-3 text-sm font-bold text-gray-900">
+            <div className="py-3 text-sm font-bold text-text-primary">
               {state.currentSet.p1}
             </div>
           )}
           {/* Pad empty set columns */}
           {Array.from({ length: Math.max(0, scoreboard.best_of - state.sets.length - (isComplete ? 0 : 1)) }).map((_, i) => (
-            <div key={`pad-${i}`} className="py-3 text-sm text-gray-200">-</div>
+            <div key={`pad-${i}`} className="py-3 text-sm text-text-tertiary">-</div>
           ))}
           {!isComplete && (
             <div className={`py-3 text-sm font-bold ${state.isTiebreak ? "text-blue-600" : "text-green-600"}`}>
@@ -224,7 +224,7 @@ export default function ScoreboardAdminPage() {
             {state.server === 2 && !isComplete && (
               <span className="h-2 w-2 rounded-full bg-green-500 flex-shrink-0" />
             )}
-            <span className={`text-sm font-semibold uppercase truncate ${state.matchWinner === 2 ? "text-green-700" : "text-gray-900"}`}>
+            <span className={`text-sm font-semibold uppercase truncate ${state.matchWinner === 2 ? "text-green-700" : "text-text-primary"}`}>
               {scoreboard.player2_name}
             </span>
             {state.matchWinner === 2 && (
@@ -232,17 +232,17 @@ export default function ScoreboardAdminPage() {
             )}
           </div>
           {state.sets.map((set, i) => (
-            <div key={i} className={`py-3 text-sm font-bold ${set.p2 > set.p1 ? "text-gray-900" : "text-gray-400"}`}>
+            <div key={i} className={`py-3 text-sm font-bold ${set.p2 > set.p1 ? "text-text-primary" : "text-text-tertiary"}`}>
               {set.p2}
             </div>
           ))}
           {!isComplete && (
-            <div className="py-3 text-sm font-bold text-gray-900">
+            <div className="py-3 text-sm font-bold text-text-primary">
               {state.currentSet.p2}
             </div>
           )}
           {Array.from({ length: Math.max(0, scoreboard.best_of - state.sets.length - (isComplete ? 0 : 1)) }).map((_, i) => (
-            <div key={`pad-${i}`} className="py-3 text-sm text-gray-200">-</div>
+            <div key={`pad-${i}`} className="py-3 text-sm text-text-tertiary">-</div>
           ))}
           {!isComplete && (
             <div className={`py-3 text-sm font-bold ${state.isTiebreak ? "text-blue-600" : "text-green-600"}`}>
@@ -285,7 +285,7 @@ export default function ScoreboardAdminPage() {
           <button
             onClick={handleUndo}
             disabled={saving || !state.history?.length}
-            className="flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-30 cursor-pointer"
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-border-theme bg-surface py-3 text-sm font-medium text-text-secondary hover:bg-surface-secondary transition-colors disabled:opacity-30 cursor-pointer"
           >
             <Undo2 className="h-4 w-4" />
             Undo last point

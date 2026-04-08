@@ -138,7 +138,7 @@ export default function DashboardPage() {
 
   if (loading || fetching) {
     return (
-      <div className="flex flex-col h-[calc(100vh-3.5rem)] bg-white">
+      <div className="flex flex-col h-[calc(100vh-3.5rem)] bg-surface">
         <div className="bg-blue-600 px-4 py-4">
           <div className="h-5 w-40 animate-pulse rounded bg-blue-400" />
         </div>
@@ -148,7 +148,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-3.5rem)] bg-white">
+    <div className="flex flex-col h-[calc(100vh-3.5rem)] bg-surface">
       {/* Header */}
       <div className="bg-blue-600 px-4 py-4">
         <h1 className="text-lg font-bold text-white">All Tournaments</h1>
@@ -157,7 +157,7 @@ export default function DashboardPage() {
       {/* Tournament List */}
       <div className="flex-1 overflow-y-auto">
         {tournaments.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+          <div className="flex flex-col items-center justify-center py-20 text-text-tertiary">
             <Trophy className="h-10 w-10 mb-2" />
             <p className="text-sm">No tournaments yet</p>
             <p className="text-xs mt-1">Tap + to create your first tournament</p>
@@ -167,11 +167,11 @@ export default function DashboardPage() {
             {tournaments.map((tournament) => (
               <div
                 key={tournament.id}
-                className="flex items-center justify-between border-b border-gray-100 px-4 py-4"
+                className="flex items-center justify-between border-b border-border-light px-4 py-4"
               >
                 <Link
                   href={`/tournaments/${tournament.id}`}
-                  className="flex-1 text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors"
+                  className="flex-1 text-sm font-medium text-text-primary hover:text-blue-600 transition-colors"
                 >
                   {tournament.name}
                 </Link>
@@ -180,7 +180,7 @@ export default function DashboardPage() {
                     onClick={() =>
                       setMenuOpen(menuOpen === tournament.id ? null : tournament.id)
                     }
-                    className="p-1 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                    className="p-1 text-text-tertiary hover:text-gray-600 transition-colors cursor-pointer"
                   >
                     <MoreVertical className="h-4 w-4" />
                   </button>
@@ -191,7 +191,7 @@ export default function DashboardPage() {
                         className="fixed inset-0 z-30"
                         onClick={() => setMenuOpen(null)}
                       />
-                      <div className="absolute right-0 top-8 z-40 w-36 rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
+                      <div className="absolute right-0 top-8 z-40 w-36 rounded-lg border border-border-theme bg-surface py-1 shadow-lg">
                         <button
                           onClick={() => {
                             setEditingTournament(tournament);
@@ -201,7 +201,7 @@ export default function DashboardPage() {
                             setEditError("");
                             setMenuOpen(null);
                           }}
-                          className="flex w-full items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                          className="flex w-full items-center px-4 py-2.5 text-sm text-text-secondary hover:bg-surface-secondary cursor-pointer"
                         >
                           Edit
                         </button>
@@ -210,7 +210,7 @@ export default function DashboardPage() {
                             setDeletingTournament(tournament);
                             setMenuOpen(null);
                           }}
-                          className="flex w-full items-center px-4 py-2.5 text-sm text-red-600 hover:bg-gray-50 cursor-pointer"
+                          className="flex w-full items-center px-4 py-2.5 text-sm text-red-600 hover:bg-surface-secondary cursor-pointer"
                         >
                           Delete
                         </button>
@@ -235,7 +235,7 @@ export default function DashboardPage() {
       {/* Edit Tournament Modal */}
       {editingTournament && (
         <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-black/40">
-          <div className="w-full max-w-md rounded-t-2xl sm:rounded-lg bg-white shadow-xl overflow-hidden">
+          <div className="w-full max-w-md rounded-t-2xl sm:rounded-lg bg-surface shadow-xl overflow-hidden">
             <div className="flex items-center justify-between bg-blue-600 px-5 py-4">
               <h2 className="text-base font-bold text-white">Edit tournament</h2>
               <button
@@ -257,7 +257,7 @@ export default function DashboardPage() {
                       Draws have been locked. Tournament details cannot be edited.
                     </div>
                   )}
-                  <div className="border-b border-gray-200 py-3">
+                  <div className="border-b border-border-theme py-3">
                     <input
                       type="text"
                       placeholder="Tournament name"
@@ -265,16 +265,16 @@ export default function DashboardPage() {
                       onChange={(e) => setEditName(e.target.value)}
                       required
                       disabled={locked}
-                      className={`w-full text-sm bg-transparent outline-none placeholder:text-gray-400 ${locked ? "text-gray-400" : "text-gray-900"}`}
+                      className={`w-full text-sm bg-transparent outline-none placeholder:text-text-tertiary ${locked ? "text-text-tertiary" : "text-text-primary"}`}
                     />
                   </div>
-                  <div className="flex items-center justify-between border-b border-gray-200 py-3">
-                    <span className="text-sm text-gray-500">No of players</span>
+                  <div className="flex items-center justify-between border-b border-border-theme py-3">
+                    <span className="text-sm text-text-muted">No of players</span>
                     <select
                       value={editPlayers}
                       onChange={(e) => setEditPlayers(e.target.value)}
                       disabled={locked}
-                      className={`text-sm font-medium bg-transparent outline-none ${locked ? "text-gray-400" : "text-gray-900 cursor-pointer"}`}
+                      className={`text-sm font-medium bg-transparent outline-none ${locked ? "text-text-tertiary" : "text-text-primary cursor-pointer"}`}
                     >
                       <option value="8">8 Players</option>
                       <option value="16">16 Players</option>
@@ -282,13 +282,13 @@ export default function DashboardPage() {
                       <option value="64">64 Players</option>
                     </select>
                   </div>
-                  <div className="flex items-center justify-between border-b border-gray-200 py-3">
-                    <span className="text-sm text-gray-500">No of rounds</span>
+                  <div className="flex items-center justify-between border-b border-border-theme py-3">
+                    <span className="text-sm text-text-muted">No of rounds</span>
                     <select
                       value={editRounds}
                       onChange={(e) => setEditRounds(e.target.value)}
                       disabled={locked}
-                      className={`text-sm font-medium bg-transparent outline-none ${locked ? "text-gray-400" : "text-gray-900 cursor-pointer"}`}
+                      className={`text-sm font-medium bg-transparent outline-none ${locked ? "text-text-tertiary" : "text-text-primary cursor-pointer"}`}
                     >
                       <option value="3">3 Rounds</option>
                       <option value="4">4 Rounds</option>
@@ -317,15 +317,15 @@ export default function DashboardPage() {
       {/* Delete Confirmation Modal */}
       {deletingTournament && (
         <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-black/40">
-          <div className="w-full max-w-sm rounded-t-2xl sm:rounded-lg bg-white p-6 shadow-xl">
-            <h2 className="text-lg font-bold text-gray-900">Delete tournament?</h2>
-            <p className="mt-2 text-sm text-gray-500">
+          <div className="w-full max-w-sm rounded-t-2xl sm:rounded-lg bg-surface p-6 shadow-xl">
+            <h2 className="text-lg font-bold text-text-primary">Delete tournament?</h2>
+            <p className="mt-2 text-sm text-text-muted">
               Are you sure you want to delete <strong>{deletingTournament.name}</strong>? This action cannot be undone.
             </p>
             <div className="mt-5 flex gap-3 justify-end">
               <button
                 onClick={() => setDeletingTournament(null)}
-                className="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
+                className="rounded-lg px-4 py-2 text-sm font-medium text-text-secondary hover:bg-surface-secondary transition-colors cursor-pointer"
               >
                 Cancel
               </button>
@@ -344,7 +344,7 @@ export default function DashboardPage() {
       {/* Add Tournament Modal */}
       {showModal && (
         <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-black/40">
-          <div className="w-full max-w-md rounded-t-2xl sm:rounded-lg bg-white shadow-xl overflow-hidden">
+          <div className="w-full max-w-md rounded-t-2xl sm:rounded-lg bg-surface shadow-xl overflow-hidden">
             {/* Modal Header */}
             <div className="flex items-center justify-between bg-blue-600 px-5 py-4">
               <h2 className="text-base font-bold text-white">Add tournament</h2>
@@ -362,23 +362,23 @@ export default function DashboardPage() {
 
             {/* Modal Body */}
             <form onSubmit={handleCreate} className="p-5 space-y-0">
-              <div className="border-b border-gray-200 py-3">
+              <div className="border-b border-border-theme py-3">
                 <input
                   type="text"
                   placeholder="Tournament name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
-                  className="w-full text-sm text-gray-900 bg-transparent outline-none placeholder:text-gray-400"
+                  className="w-full text-sm text-text-primary bg-transparent outline-none placeholder:text-text-tertiary"
                 />
               </div>
 
-              <div className="flex items-center justify-between border-b border-gray-200 py-3">
-                <span className="text-sm text-gray-500">No of players</span>
+              <div className="flex items-center justify-between border-b border-border-theme py-3">
+                <span className="text-sm text-text-muted">No of players</span>
                 <select
                   value={maxPlayers}
                   onChange={(e) => setMaxPlayers(e.target.value)}
-                  className="text-sm font-medium text-gray-900 bg-transparent outline-none cursor-pointer"
+                  className="text-sm font-medium text-text-primary bg-transparent outline-none cursor-pointer"
                 >
                   <option value="8">8 Players</option>
                   <option value="16">16 Players</option>
@@ -387,12 +387,12 @@ export default function DashboardPage() {
                 </select>
               </div>
 
-              <div className="flex items-center justify-between border-b border-gray-200 py-3">
-                <span className="text-sm text-gray-500">No of rounds</span>
+              <div className="flex items-center justify-between border-b border-border-theme py-3">
+                <span className="text-sm text-text-muted">No of rounds</span>
                 <select
                   value={totalRounds}
                   onChange={(e) => setTotalRounds(e.target.value)}
-                  className="text-sm font-medium text-gray-900 bg-transparent outline-none cursor-pointer"
+                  className="text-sm font-medium text-text-primary bg-transparent outline-none cursor-pointer"
                 >
                   <option value="3">3 Rounds</option>
                   <option value="4">4 Rounds</option>

@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/client";
 import { SkeletonList } from "@/components/ui/Skeleton";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { formatGameScore } from "@/lib/scoreboard/tennis";
 import type { Scoreboard, ScoreState } from "@/lib/scoreboard/tennis";
 import { Trophy } from "lucide-react";
@@ -71,11 +72,12 @@ export default function ScoreboardLivePage() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center px-4 py-8">
+    <div className="min-h-screen bg-surface flex flex-col items-center justify-center px-4 py-8">
+      <ThemeToggle />
       {/* Status */}
       <div className="mb-4 text-center">
         {scoreboard.court_name && (
-          <p className="text-xs font-medium text-gray-500 uppercase tracking-widest mb-1">
+          <p className="text-xs font-medium text-text-muted uppercase tracking-widest mb-1">
             {scoreboard.court_name}
           </p>
         )}
@@ -98,15 +100,15 @@ export default function ScoreboardLivePage() {
       {isComplete && (
         <div className="mb-6 text-center">
           <Trophy className="h-10 w-10 text-amber-400 mx-auto mb-2" />
-          <p className="text-xl font-bold text-white">{winnerName} wins!</p>
+          <p className="text-xl font-bold text-text-primary">{winnerName} wins!</p>
         </div>
       )}
 
       {/* Scoreboard */}
-      <div className="w-full max-w-lg rounded-2xl bg-gray-800 border border-gray-700 overflow-hidden shadow-2xl">
+      <div className="w-full max-w-lg rounded-2xl bg-surface-secondary border border-border-theme overflow-hidden shadow-2xl">
         {/* Header */}
         <div
-          className="grid bg-gray-800 border-b border-gray-700 text-center text-xs font-bold text-gray-500 uppercase tracking-wide"
+          className="grid bg-surface-secondary border-b border-border-theme text-center text-xs font-bold text-text-muted uppercase tracking-wide"
           style={{
             gridTemplateColumns: `1fr repeat(${totalSetCols}, 2.5rem) ${isComplete ? "" : "3rem"}`,
           }}
@@ -120,7 +122,7 @@ export default function ScoreboardLivePage() {
 
         {/* Player 1 */}
         <div
-          className="grid border-b border-gray-700/50 text-center items-center"
+          className="grid border-b border-border-theme/50 text-center items-center"
           style={{
             gridTemplateColumns: `1fr repeat(${totalSetCols}, 2.5rem) ${isComplete ? "" : "3rem"}`,
           }}
@@ -129,7 +131,7 @@ export default function ScoreboardLivePage() {
             {state.server === 1 && !isComplete && (
               <span className="h-2.5 w-2.5 rounded-full bg-green-400 flex-shrink-0" />
             )}
-            <span className={`text-sm font-bold uppercase truncate ${state.matchWinner === 1 ? "text-green-400" : "text-white"}`}>
+            <span className={`text-sm font-bold uppercase truncate ${state.matchWinner === 1 ? "text-green-400" : "text-text-primary"}`}>
               {scoreboard.player1_name}
             </span>
             {state.matchWinner === 1 && (
@@ -137,17 +139,17 @@ export default function ScoreboardLivePage() {
             )}
           </div>
           {state.sets.map((set, i) => (
-            <div key={i} className={`py-4 text-base font-bold ${set.p1 > set.p2 ? "text-white" : "text-gray-500"}`}>
+            <div key={i} className={`py-4 text-base font-bold ${set.p1 > set.p2 ? "text-text-primary" : "text-text-muted"}`}>
               {set.p1}
             </div>
           ))}
           {!isComplete && (
-            <div className="py-4 text-base font-bold text-white">
+            <div className="py-4 text-base font-bold text-text-primary">
               {state.currentSet.p1}
             </div>
           )}
           {Array.from({ length: Math.max(0, scoreboard.best_of - state.sets.length - (isComplete ? 0 : 1)) }).map((_, i) => (
-            <div key={`pad-${i}`} className="py-4 text-base text-gray-700">-</div>
+            <div key={`pad-${i}`} className="py-4 text-base text-text-tertiary">-</div>
           ))}
           {!isComplete && (
             <div className={`py-4 text-base font-bold ${state.isTiebreak ? "text-blue-400" : "text-green-400"}`}>
@@ -167,7 +169,7 @@ export default function ScoreboardLivePage() {
             {state.server === 2 && !isComplete && (
               <span className="h-2.5 w-2.5 rounded-full bg-green-400 flex-shrink-0" />
             )}
-            <span className={`text-sm font-bold uppercase truncate ${state.matchWinner === 2 ? "text-green-400" : "text-white"}`}>
+            <span className={`text-sm font-bold uppercase truncate ${state.matchWinner === 2 ? "text-green-400" : "text-text-primary"}`}>
               {scoreboard.player2_name}
             </span>
             {state.matchWinner === 2 && (
@@ -175,17 +177,17 @@ export default function ScoreboardLivePage() {
             )}
           </div>
           {state.sets.map((set, i) => (
-            <div key={i} className={`py-4 text-base font-bold ${set.p2 > set.p1 ? "text-white" : "text-gray-500"}`}>
+            <div key={i} className={`py-4 text-base font-bold ${set.p2 > set.p1 ? "text-text-primary" : "text-text-muted"}`}>
               {set.p2}
             </div>
           ))}
           {!isComplete && (
-            <div className="py-4 text-base font-bold text-white">
+            <div className="py-4 text-base font-bold text-text-primary">
               {state.currentSet.p2}
             </div>
           )}
           {Array.from({ length: Math.max(0, scoreboard.best_of - state.sets.length - (isComplete ? 0 : 1)) }).map((_, i) => (
-            <div key={`pad-${i}`} className="py-4 text-base text-gray-700">-</div>
+            <div key={`pad-${i}`} className="py-4 text-base text-text-tertiary">-</div>
           ))}
           {!isComplete && (
             <div className={`py-4 text-base font-bold ${state.isTiebreak ? "text-blue-400" : "text-green-400"}`}>
@@ -203,7 +205,7 @@ export default function ScoreboardLivePage() {
       )}
 
       {/* Best of info */}
-      <p className="mt-4 text-xs text-gray-600">
+      <p className="mt-4 text-xs text-text-secondary">
         Best of {scoreboard.best_of} sets
       </p>
     </div>

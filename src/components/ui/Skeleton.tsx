@@ -3,18 +3,18 @@ import { cn } from "@/lib/utils/cn";
 function Skeleton({ className }: { className?: string }) {
   return (
     <div
-      className={cn("animate-pulse rounded-md bg-gray-100", className)}
+      className={cn("animate-pulse rounded-md bg-surface-secondary", className)}
     />
   );
 }
 
 export function SkeletonList({ rows = 6 }: { rows?: number }) {
   return (
-    <div className="bg-white">
+    <div className="bg-surface">
       {Array.from({ length: rows }).map((_, i) => (
         <div
           key={i}
-          className="flex items-center gap-4 border-b border-gray-100 px-4 py-4"
+          className="flex items-center gap-4 border-b border-border-light px-4 py-4"
         >
           <Skeleton className="h-4 w-8" />
           <Skeleton className="h-4 w-40" />
@@ -33,7 +33,7 @@ export function SkeletonCards({ count = 4 }: { count?: number }) {
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={i}
-          className="rounded-xl border border-gray-100 bg-white p-4 shadow-md"
+          className="rounded-xl border border-border-light bg-surface p-4 shadow-md"
         >
           <div className="flex items-center justify-between mb-3">
             <Skeleton className="h-3 w-16" />
@@ -51,14 +51,14 @@ export function SkeletonCards({ count = 4 }: { count?: number }) {
 
 export function SkeletonTable({ rows = 6, cols = 5 }: { rows?: number; cols?: number }) {
   return (
-    <div className="bg-white">
-      <div className="flex gap-4 border-b border-gray-200 px-4 py-3">
+    <div className="bg-surface">
+      <div className="flex gap-4 border-b border-border-theme px-4 py-3">
         {Array.from({ length: cols }).map((_, i) => (
           <Skeleton key={i} className="h-3 w-16" />
         ))}
       </div>
       {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="flex gap-4 border-b border-gray-100 px-4 py-4">
+        <div key={i} className="flex gap-4 border-b border-border-light px-4 py-4">
           {Array.from({ length: cols }).map((_, j) => (
             <Skeleton key={j} className="h-4 w-16" />
           ))}

@@ -162,8 +162,8 @@ export default function DrawPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
-      <h1 className="text-2xl font-bold text-gray-900">Draw & Rounds</h1>
-      <p className="mt-1 text-sm text-gray-500">
+      <h1 className="text-2xl font-bold text-text-primary">Draw & Rounds</h1>
+      <p className="mt-1 text-sm text-text-muted">
         {rounds.length}/{tournament.total_rounds} rounds generated
       </p>
 
@@ -186,9 +186,9 @@ export default function DrawPage() {
           <Link
             key={round.id}
             href={`/tournaments/${tournamentId}/rounds/${round.round_number}`}
-            className="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3 transition hover:shadow-sm"
+            className="flex items-center justify-between rounded-lg border border-gray-200 bg-surface px-4 py-3 transition hover:shadow-sm"
           >
-            <span className="font-medium text-gray-900">
+            <span className="font-medium text-text-primary">
               Round {round.round_number}
             </span>
             <span

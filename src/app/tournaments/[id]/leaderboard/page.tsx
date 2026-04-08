@@ -47,24 +47,24 @@ export default function LeaderboardPage() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
-      <h1 className="text-2xl font-bold text-gray-900">Leaderboard</h1>
+      <h1 className="text-2xl font-bold text-text-primary">Leaderboard</h1>
 
       <div className="mt-6 overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="border-b border-gray-200">
-              <th className="px-3 py-2 font-semibold text-gray-500">#</th>
-              <th className="px-3 py-2 font-semibold text-gray-500">Player</th>
-              <th className="px-3 py-2 font-semibold text-gray-500">Class</th>
+              <th className="px-3 py-2 font-semibold text-text-muted">#</th>
+              <th className="px-3 py-2 font-semibold text-text-muted">Player</th>
+              <th className="px-3 py-2 font-semibold text-text-muted">Class</th>
               {roundColumns.map((r) => (
                 <th
                   key={r}
-                  className="px-3 py-2 text-center font-semibold text-gray-500"
+                  className="px-3 py-2 text-center font-semibold text-text-muted"
                 >
                   R{r}
                 </th>
               ))}
-              <th className="px-3 py-2 text-center font-semibold text-gray-900">
+              <th className="px-3 py-2 text-center font-semibold text-text-primary">
                 Total
               </th>
             </tr>
@@ -77,23 +77,23 @@ export default function LeaderboardPage() {
                   index < 3 ? "bg-yellow-50/50" : ""
                 }`}
               >
-                <td className="px-3 py-2 font-medium text-gray-400">
+                <td className="px-3 py-2 font-medium text-text-tertiary">
                   {index + 1}
                 </td>
-                <td className="px-3 py-2 font-medium text-gray-900">
+                <td className="px-3 py-2 font-medium text-text-primary">
                   {row.player.name}
                 </td>
                 <td className="px-3 py-2">
                   <Badge classification={row.player.classification} />
                 </td>
                 {roundColumns.map((r) => (
-                  <td key={r} className="px-3 py-2 text-center text-gray-600">
+                  <td key={r} className="px-3 py-2 text-center text-text-secondary">
                     {row.roundScores[r] !== undefined
                       ? row.roundScores[r]
                       : "—"}
                   </td>
                 ))}
-                <td className="px-3 py-2 text-center font-bold text-gray-900">
+                <td className="px-3 py-2 text-center font-bold text-text-primary">
                   {row.total}
                 </td>
               </tr>

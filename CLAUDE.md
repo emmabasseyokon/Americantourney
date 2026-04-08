@@ -28,7 +28,7 @@ src/
 │   │   ├── [id]/
 │   │   │   ├── page.tsx         # Admin: live scoring interface (tap to award points)
 │   │   │   └── live/
-│   │   │       └── page.tsx     # PUBLIC: real-time scoreboard (dark theme, no auth)
+│   │   │       └── page.tsx     # PUBLIC: real-time scoreboard (theme-aware, no auth)
 │   │   └── live/
 │   │       └── page.tsx         # PUBLIC: all in-progress matches list
 │   ├── tournaments/
@@ -38,9 +38,9 @@ src/
 │   │           └── page.tsx     # PUBLIC: read-only tabbed layout (no auth, no classifications)
 │   └── page.tsx                 # Landing page
 ├── components/
-│   ├── ui/                      # Button, Input, Select, Skeleton
+│   ├── ui/                      # Button, Input, Select, Skeleton, ThemeToggle
 │   ├── layout/                  # Navbar (hidden on /live pages, logo → dashboard when logged in)
-│   └── providers/               # SupabaseProvider (auth context)
+│   └── providers/               # SupabaseProvider, ThemeProvider
 ├── lib/
 │   ├── supabase/                # client.ts, server.ts, middleware.ts
 │   ├── draw/                    # americano.ts (draw algorithm), types.ts
@@ -117,6 +117,14 @@ src/
 - Admin can **Regenerate** for new random pairings or **Lock** to save to DB
 - Algorithm uses retry logic (50 attempts per relaxation level) with progressive rule relaxation
 - Once locked, tournament edit (name/players/rounds) is disabled
+
+## Dark Mode
+- **Toggle:** Sun/Moon icon in Navbar (admin pages) + floating ThemeToggle button on live pages
+- **Implementation:** CSS custom properties in `globals.css` + Tailwind v4 `@custom-variant dark`
+- **Persistence:** Saved to `localStorage` (`tourney-theme` key), restored on page load
+- **Theme tokens:** `bg-surface`, `bg-surface-secondary`, `text-text-primary`, `text-text-secondary`, `border-border-theme`, etc.
+- **Provider:** `ThemeProvider` wraps the app, adds/removes `.dark` class on `<html>`
+- **All pages** (admin, live, auth, landing) respect the theme toggle
 
 ## Security
 - **Rate limiting:** Client-side on login (5 attempts/min) and register (3 attempts/min) via `checkRateLimit()`

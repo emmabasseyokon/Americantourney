@@ -140,16 +140,16 @@ export default function RoundPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
-      <h1 className="text-2xl font-bold text-gray-900">Round {roundNum}</h1>
+      <h1 className="text-2xl font-bold text-text-primary">Round {roundNum}</h1>
 
       <div className="mt-6 space-y-4">
         {matches.map((match) => (
           <div
             key={match.id}
-            className="rounded-lg border border-gray-200 bg-white p-4"
+            className="rounded-lg border border-border-theme bg-surface p-4"
           >
             <div className="mb-3 flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-500">
+              <span className="text-sm font-medium text-text-muted">
                 Court {match.court_number}
               </span>
               <span
@@ -187,7 +187,7 @@ export default function RoundPage() {
                       [match.id]: parseInt(e.target.value),
                     })
                   }
-                  className="w-14 rounded border border-gray-300 bg-white px-2 py-1 text-center text-lg font-bold text-gray-900"
+                  className="w-14 rounded border border-input-border bg-surface px-2 py-1 text-center text-lg font-bold text-text-primary"
                 >
                   {[0, 1, 2, 3, 4, 5].map((n) => (
                     <option key={n} value={n}>
@@ -195,8 +195,8 @@ export default function RoundPage() {
                     </option>
                   ))}
                 </select>
-                <span className="text-gray-400">-</span>
-                <span className="w-14 rounded border border-gray-200 bg-gray-50 px-2 py-1 text-center text-lg font-bold text-gray-500">
+                <span className="text-text-tertiary">-</span>
+                <span className="w-14 rounded border border-border-theme bg-gray-50 px-2 py-1 text-center text-lg font-bold text-text-muted">
                   {5 - (scores[match.id] ?? 0)}
                 </span>
               </div>

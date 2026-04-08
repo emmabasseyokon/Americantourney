@@ -36,7 +36,7 @@ export default function HomePage() {
       {/* Features */}
       <section className="px-4 py-16">
         <div className="mx-auto max-w-4xl">
-          <h2 className="text-center text-2xl font-bold text-gray-900">
+          <h2 className="text-center text-2xl font-bold text-text-primary">
             How It Works
           </h2>
           <div className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
@@ -78,11 +78,11 @@ function Feature({
 }) {
   return (
     <div className="text-center">
-      <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-lg bg-blue-50">
+      <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-lg bg-surface-secondary">
         {icon}
       </div>
-      <h3 className="font-semibold text-gray-900">{title}</h3>
-      <p className="mt-1 text-sm text-gray-600">{description}</p>
+      <h3 className="font-semibold text-text-primary">{title}</h3>
+      <p className="mt-1 text-sm text-text-secondary">{description}</p>
     </div>
   );
 }

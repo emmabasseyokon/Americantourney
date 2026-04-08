@@ -94,8 +94,8 @@ export default function PlayersPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
-      <h1 className="text-2xl font-bold text-gray-900">Players</h1>
-      <p className="mt-1 text-sm text-gray-500">
+      <h1 className="text-2xl font-bold text-text-primary">Players</h1>
+      <p className="mt-1 text-sm text-text-muted">
         {players.length}/{tournament.max_players} registered
       </p>
 
@@ -103,9 +103,9 @@ export default function PlayersPage() {
       {!isFull && (
         <form
           onSubmit={handleAddPlayer}
-          className="mt-6 rounded-lg border border-gray-200 bg-white p-4"
+          className="mt-6 rounded-lg border border-border-theme bg-surface p-4"
         >
-          <h2 className="font-semibold text-gray-900">Add Player</h2>
+          <h2 className="font-semibold text-text-primary">Add Player</h2>
           <div className="mt-3 grid gap-3 sm:grid-cols-4">
             <div className="sm:col-span-2">
               <Input
@@ -159,21 +159,21 @@ export default function PlayersPage() {
         {players.map((player, index) => (
           <div
             key={player.id}
-            className="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2.5"
+            className="flex items-center justify-between rounded-lg border border-border-theme bg-surface px-4 py-2.5"
           >
             <div className="flex items-center gap-3">
-              <span className="text-xs font-medium text-gray-400 w-5">
+              <span className="text-xs font-medium text-text-tertiary w-5">
                 {index + 1}
               </span>
-              <span className="font-medium text-gray-900">{player.name}</span>
-              <span className="text-xs text-gray-500 capitalize">
+              <span className="font-medium text-text-primary">{player.name}</span>
+              <span className="text-xs text-text-muted capitalize">
                 {player.gender}
               </span>
               <Badge classification={player.classification} />
             </div>
             <button
               onClick={() => handleDeletePlayer(player.id)}
-              className="text-gray-400 hover:text-red-500 transition-colors"
+              className="text-text-tertiary hover:text-red-500 transition-colors"
             >
               <Trash2 className="h-4 w-4" />
             </button>

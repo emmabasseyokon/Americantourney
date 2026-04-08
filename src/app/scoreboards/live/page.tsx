@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/client";
 import { SkeletonList } from "@/components/ui/Skeleton";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { formatGameScore, formatMatchScore } from "@/lib/scoreboard/tennis";
 import type { Scoreboard, ScoreState } from "@/lib/scoreboard/tennis";
 import { Activity, Trophy } from "lucide-react";
@@ -50,9 +51,9 @@ export default function ScoreboardsLivePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-900">
-        <div className="bg-gray-800 px-4 py-4 border-b border-gray-700">
-          <div className="h-5 w-40 animate-pulse rounded bg-gray-600" />
+      <div className="min-h-screen bg-surface">
+        <div className="bg-surface-secondary px-4 py-4 border-b border-border-theme">
+          <div className="h-5 w-40 animate-pulse rounded bg-surface-tertiary" />
         </div>
         <SkeletonList rows={6} />
       </div>
@@ -60,14 +61,15 @@ export default function ScoreboardsLivePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen bg-surface">
+      <ThemeToggle />
       {/* Header */}
-      <div className="bg-gray-800 px-4 py-4 border-b border-gray-700">
-        <h1 className="text-lg font-bold text-white">Live Matches</h1>
+      <div className="bg-surface-secondary px-4 py-4 border-b border-border-theme">
+        <h1 className="text-lg font-bold text-text-primary">Live Matches</h1>
       </div>
 
       {scoreboards.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-gray-500">
+        <div className="flex flex-col items-center justify-center py-20 text-text-muted">
           <Activity className="h-10 w-10 mb-2" />
           <p className="text-sm">No live matches right now</p>
         </div>
@@ -90,7 +92,7 @@ function MatchCard({ scoreboard }: { scoreboard: Scoreboard }) {
   return (
     <Link
       href={`/scoreboards/${scoreboard.id}/live`}
-      className="block rounded-xl bg-gray-800 border border-gray-700 p-4 hover:border-gray-600 transition-colors"
+      className="block rounded-xl bg-surface-secondary border border-border-theme p-4 hover:border-border-light transition-colors"
     >
       {/* Status + court */}
       <div className="flex items-center justify-between mb-3">
@@ -104,10 +106,10 @@ function MatchCard({ scoreboard }: { scoreboard: Scoreboard }) {
             <span className="text-xs font-bold text-amber-400 uppercase">Pending</span>
           )}
           {scoreboard.court_name && (
-            <span className="text-xs text-gray-500">{scoreboard.court_name}</span>
+            <span className="text-xs text-text-muted">{scoreboard.court_name}</span>
           )}
         </div>
-        <span className="text-xs text-gray-500">Best of {scoreboard.best_of}</span>
+        <span className="text-xs text-text-muted">Best of {scoreboard.best_of}</span>
       </div>
 
       {/* Player 1 */}
@@ -116,19 +118,19 @@ function MatchCard({ scoreboard }: { scoreboard: Scoreboard }) {
           {state.server === 1 && isLive && (
             <span className="h-1.5 w-1.5 rounded-full bg-green-400 flex-shrink-0" />
           )}
-          <span className="text-sm font-semibold text-white uppercase">
+          <span className="text-sm font-semibold text-text-primary uppercase">
             {scoreboard.player1_name}
           </span>
         </div>
         <div className="flex items-center gap-3">
           {state.sets.map((set, i) => (
-            <span key={i} className={`text-sm font-bold w-4 text-center ${set.p1 > set.p2 ? "text-white" : "text-gray-500"}`}>
+            <span key={i} className={`text-sm font-bold w-4 text-center ${set.p1 > set.p2 ? "text-text-primary" : "text-text-muted"}`}>
               {set.p1}
             </span>
           ))}
           {isLive && (
             <>
-              <span className="text-sm font-bold w-4 text-center text-white">
+              <span className="text-sm font-bold w-4 text-center text-text-primary">
                 {state.currentSet.p1}
               </span>
               <span className={`text-sm font-bold w-5 text-center ${state.isTiebreak ? "text-blue-400" : "text-green-400"}`}>
@@ -145,19 +147,19 @@ function MatchCard({ scoreboard }: { scoreboard: Scoreboard }) {
           {state.server === 2 && isLive && (
             <span className="h-1.5 w-1.5 rounded-full bg-green-400 flex-shrink-0" />
           )}
-          <span className="text-sm font-semibold text-white uppercase">
+          <span className="text-sm font-semibold text-text-primary uppercase">
             {scoreboard.player2_name}
           </span>
         </div>
         <div className="flex items-center gap-3">
           {state.sets.map((set, i) => (
-            <span key={i} className={`text-sm font-bold w-4 text-center ${set.p2 > set.p1 ? "text-white" : "text-gray-500"}`}>
+            <span key={i} className={`text-sm font-bold w-4 text-center ${set.p2 > set.p1 ? "text-text-primary" : "text-text-muted"}`}>
               {set.p2}
             </span>
           ))}
           {isLive && (
             <>
-              <span className="text-sm font-bold w-4 text-center text-white">
+              <span className="text-sm font-bold w-4 text-center text-text-primary">
                 {state.currentSet.p2}
               </span>
               <span className={`text-sm font-bold w-5 text-center ${state.isTiebreak ? "text-blue-400" : "text-green-400"}`}>

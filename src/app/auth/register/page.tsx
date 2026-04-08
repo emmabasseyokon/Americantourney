@@ -54,11 +54,11 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+    <div className="flex min-h-screen items-center justify-center bg-surface-secondary px-4">
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900">Tourney</h1>
-          <p className="mt-1 text-sm text-gray-600">
+          <h1 className="text-2xl font-bold text-text-primary">Tourney</h1>
+          <p className="mt-1 text-sm text-text-secondary">
             Create an admin account
           </p>
         </div>
@@ -102,7 +102,7 @@ export default function RegisterPage() {
           </Button>
         </form>
 
-        <p className="text-center text-sm text-gray-600">
+        <p className="text-center text-sm text-text-secondary">
           Already have an account?{" "}
           <Link
             href="/auth/login"

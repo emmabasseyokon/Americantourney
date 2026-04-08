@@ -94,7 +94,7 @@ export default function LiveRoundPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
-      <h1 className="text-center text-2xl font-bold text-gray-900">
+      <h1 className="text-center text-2xl font-bold text-text-primary">
         Round {roundNum} of {totalRounds}
       </h1>
 
@@ -102,9 +102,9 @@ export default function LiveRoundPage() {
         {matches.map((match) => (
           <div
             key={match.id}
-            className="rounded-lg border border-gray-200 bg-white p-4"
+            className="rounded-lg border border-gray-200 bg-surface p-4"
           >
-            <span className="text-xs font-medium text-gray-500">
+            <span className="text-xs font-medium text-text-muted">
               Court {match.court_number}
             </span>
 
@@ -112,7 +112,7 @@ export default function LiveRoundPage() {
               {/* Team 1 - names only, no classification */}
               <div className="flex-1">
                 {match.team1Players.map((p) => (
-                  <p key={p.id} className="text-sm font-medium text-gray-900">
+                  <p key={p.id} className="text-sm font-medium text-text-primary">
                     {p.name}
                   </p>
                 ))}
@@ -121,18 +121,18 @@ export default function LiveRoundPage() {
               {/* Score */}
               <div className="px-4 text-center">
                 {match.status === "completed" ? (
-                  <span className="text-xl font-bold text-gray-900">
+                  <span className="text-xl font-bold text-text-primary">
                     {match.team1_score} - {match.team2_score}
                   </span>
                 ) : (
-                  <span className="text-sm text-gray-400">vs</span>
+                  <span className="text-sm text-text-tertiary">vs</span>
                 )}
               </div>
 
               {/* Team 2 - names only */}
               <div className="flex-1 text-right">
                 {match.team2Players.map((p) => (
-                  <p key={p.id} className="text-sm font-medium text-gray-900">
+                  <p key={p.id} className="text-sm font-medium text-text-primary">
                     {p.name}
                   </p>
                 ))}

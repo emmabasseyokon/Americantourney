@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/client";
 import { SkeletonList } from "@/components/ui/Skeleton";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import type { Tournament, Player, Round } from "@/types/database";
 import {
   fetchAndEnrichMatchups,
@@ -104,8 +105,8 @@ export default function LiveTournamentPage() {
 
   if (loading || !tournament) {
     return (
-      <div className="flex flex-col h-[calc(100vh-3.5rem)] bg-white">
-        <div className="border-b border-gray-200 bg-white px-4 py-3">
+      <div className="flex flex-col h-[calc(100vh-3.5rem)] bg-surface">
+        <div className="border-b border-border-theme bg-surface px-4 py-3">
           <div className="h-5 w-40 animate-pulse rounded bg-gray-100" />
           <div className="mt-1 h-3 w-28 animate-pulse rounded bg-gray-100" />
         </div>
@@ -120,15 +121,16 @@ export default function LiveTournamentPage() {
   );
 
   return (
-    <div className="flex flex-col h-[calc(100vh-3.5rem)] bg-white">
+    <div className="flex flex-col h-[calc(100vh-3.5rem)] bg-surface">
+      <ThemeToggle />
       {/* Header */}
-      <div className="border-b border-gray-200 bg-white px-4 py-3">
+      <div className="border-b border-border-theme bg-surface px-4 py-3">
         <div className="mx-auto max-w-4xl">
           <div>
-            <h1 className="text-lg font-bold text-gray-900">
+            <h1 className="text-lg font-bold text-text-primary">
               {tournament.name}
             </h1>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-text-muted">
               {players.length} Registered{" "}
               {tournament.max_players - players.length > 0
                 ? `${tournament.max_players - players.length} Remaining`
@@ -159,7 +161,7 @@ export default function LiveTournamentPage() {
       </div>
 
       {/* Bottom Nav */}
-      <nav className="fixed bottom-0 left-0 right-0 z-20 border-t border-gray-200 bg-white">
+      <nav className="fixed bottom-0 left-0 right-0 z-20 border-t border-border-theme bg-surface">
         <div className="mx-auto flex max-w-md">
           <TabButton
             active={activeTab === "players"}
@@ -201,7 +203,7 @@ function TabButton({
     <button
       onClick={onClick}
       className={`flex flex-1 flex-col items-center gap-0.5 py-2.5 text-xs font-medium transition-colors cursor-pointer ${
-        active ? "text-blue-600" : "text-gray-400 hover:text-gray-600"
+        active ? "text-blue-600" : "text-text-tertiary hover:text-text-secondary"
       }`}
     >
       {icon}
@@ -214,7 +216,7 @@ function TabButton({
 function LivePlayersTab({ players }: { players: Player[] }) {
   if (players.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+      <div className="flex flex-col items-center justify-center py-20 text-text-tertiary">
         <ClipboardList className="h-10 w-10 mb-2" />
         <p className="text-sm">No players registered yet</p>
       </div>
@@ -224,7 +226,7 @@ function LivePlayersTab({ players }: { players: Player[] }) {
   return (
     <div>
       {/* Table Header */}
-      <div className="grid grid-cols-[2.5rem_1fr_5rem] sm:grid-cols-[1fr_2fr_2fr] items-center border-b border-gray-200 px-4 py-2 text-xs font-medium uppercase tracking-wider text-gray-400">
+      <div className="grid grid-cols-[2.5rem_1fr_5rem] sm:grid-cols-[1fr_2fr_2fr] items-center border-b border-border-theme px-4 py-2 text-xs font-medium uppercase tracking-wider text-text-tertiary">
         <span>No.</span>
         <span>Name</span>
         <span>Gender</span>
@@ -234,13 +236,13 @@ function LivePlayersTab({ players }: { players: Player[] }) {
       {players.map((player, index) => (
         <div
           key={player.id}
-          className="grid grid-cols-[2.5rem_1fr_5rem] sm:grid-cols-[1fr_2fr_2fr] items-center border-b border-gray-100 px-4 py-4"
+          className="grid grid-cols-[2.5rem_1fr_5rem] sm:grid-cols-[1fr_2fr_2fr] items-center border-b border-border-light px-4 py-4"
         >
-          <span className="text-sm text-gray-400">{index + 1}</span>
-          <span className="text-sm font-semibold text-gray-900 uppercase">
+          <span className="text-sm text-text-tertiary">{index + 1}</span>
+          <span className="text-sm font-semibold text-text-primary uppercase">
             {player.name}
           </span>
-          <span className="text-sm font-bold text-gray-900 uppercase">
+          <span className="text-sm font-bold text-text-primary uppercase">
             {player.gender}
           </span>
         </div>
@@ -275,7 +277,7 @@ function LiveMatchupsTab({
 
   if (rounds.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+      <div className="flex flex-col items-center justify-center py-20 text-text-tertiary">
         <Swords className="h-10 w-10 mb-2" />
         <p className="text-sm">No rounds generated yet</p>
         <p className="text-xs mt-1">Check back soon!</p>
@@ -286,7 +288,7 @@ function LiveMatchupsTab({
   return (
     <div>
       {/* Round Tabs */}
-      <div className="flex border-b border-gray-200 bg-white overflow-x-auto">
+      <div className="flex border-b border-border-theme bg-surface overflow-x-auto">
         {roundTabs.map((r) => (
           <button
             key={r}
@@ -294,7 +296,7 @@ function LiveMatchupsTab({
             className={`flex-1 min-w-[5rem] py-3 text-center text-xs font-bold uppercase tracking-wide transition-colors cursor-pointer ${
               activeRound === r
                 ? "text-blue-600 border-b-3 border-blue-600"
-                : "text-gray-400 hover:text-gray-600"
+                : "text-text-tertiary hover:text-text-secondary"
             }`}
           >
             Round {r}
@@ -308,7 +310,7 @@ function LiveMatchupsTab({
           {currentRoundData?.matches.map((match) => (
             <div
               key={match.id}
-              className="rounded-xl border border-gray-100 bg-white p-4 shadow-md"
+              className="rounded-xl border border-border-light bg-surface p-4 shadow-md"
             >
               {/* Card Header — status left, court right */}
               <div className="flex items-center justify-between mb-3">
@@ -324,7 +326,7 @@ function LiveMatchupsTab({
                     : getStatusLabel(match.status)}
                 </span>
                 {match.court_number > 0 && (
-                  <span className="text-xs font-medium text-gray-500">
+                  <span className="text-xs font-medium text-text-muted">
                     {getCourtLabel(match)}
                   </span>
                 )}
@@ -347,8 +349,8 @@ function LiveMatchupsTab({
                 <div className="flex items-center gap-1 text-sm">
                   {match.team1Players.map((p, i) => (
                     <span key={p.id} className="flex items-center gap-1">
-                      {i > 0 && <span className="text-gray-400">/</span>}
-                      <span className="font-semibold text-gray-900 uppercase">
+                      {i > 0 && <span className="text-text-tertiary">/</span>}
+                      <span className="font-semibold text-text-primary uppercase">
                         {p.name}
                       </span>
                       {playerActiveCourt.has(p.id) && (
@@ -378,8 +380,8 @@ function LiveMatchupsTab({
                 <div className="flex items-center gap-1 text-sm">
                   {match.team2Players.map((p, i) => (
                     <span key={p.id} className="flex items-center gap-1">
-                      {i > 0 && <span className="text-gray-400">/</span>}
-                      <span className="font-semibold text-gray-900 uppercase">
+                      {i > 0 && <span className="text-text-tertiary">/</span>}
+                      <span className="font-semibold text-text-primary uppercase">
                         {p.name}
                       </span>
                       {playerActiveCourt.has(p.id) && (
@@ -396,7 +398,7 @@ function LiveMatchupsTab({
         </div>
 
         {!currentRoundData && (
-          <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+          <div className="flex flex-col items-center justify-center py-16 text-text-tertiary">
             <p className="text-sm">No matches for this round yet</p>
           </div>
         )}
@@ -415,7 +417,7 @@ function LiveRankingsTab({
 }) {
   if (rankings.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+      <div className="flex flex-col items-center justify-center py-20 text-text-tertiary">
         <BarChart3 className="h-10 w-10 mb-2" />
         <p className="text-sm">No rankings yet</p>
       </div>
@@ -423,10 +425,10 @@ function LiveRankingsTab({
   }
 
   return (
-    <div className="overflow-x-auto bg-white">
+    <div className="overflow-x-auto bg-surface">
       <table className="w-full text-left text-sm">
         <thead>
-          <tr className="border-b border-gray-200 text-xs uppercase tracking-wider text-gray-400">
+          <tr className="border-b border-border-theme text-xs uppercase tracking-wider text-text-tertiary">
             <th className="px-4 py-3 font-medium">#</th>
             <th className="px-4 py-3 font-medium">Player</th>
             {roundColumns.map((r) => (
@@ -441,25 +443,25 @@ function LiveRankingsTab({
           {rankings.map((row, index) => (
             <tr
               key={row.player.id}
-              className={`border-b border-gray-100 ${
+              className={`border-b border-border-light ${
                 index < 3 ? "bg-yellow-50/60" : ""
               }`}
             >
-              <td className="px-4 py-3 text-gray-400 font-medium">
+              <td className="px-4 py-3 text-text-tertiary font-medium">
                 {index + 1}
               </td>
-              <td className="px-4 py-3 font-semibold text-gray-900 uppercase">
+              <td className="px-4 py-3 font-semibold text-text-primary uppercase">
                 {row.player.name}
               </td>
               {roundColumns.map((r) => (
-                <td key={r} className="px-3 py-3 text-center text-gray-600">
+                <td key={r} className="px-3 py-3 text-center text-text-secondary">
                   {row.roundScores[r] !== undefined
                     ? row.roundScores[r]
                     : "—"}
                 </td>
               ))}
-              <td className="px-4 py-3 text-center font-bold text-gray-900 whitespace-nowrap">
-                {row.total} <span className="text-xs font-medium text-gray-400">({ordinal(index + 1)})</span>
+              <td className="px-4 py-3 text-center font-bold text-text-primary whitespace-nowrap">
+                {row.total} <span className="text-xs font-medium text-text-tertiary">({ordinal(index + 1)})</span>
               </td>
             </tr>
           ))}

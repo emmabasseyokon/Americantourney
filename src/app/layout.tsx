@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SupabaseProvider } from "@/components/providers/SupabaseProvider";
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { Navbar } from "@/components/layout/Navbar";
 import "./globals.css";
 
@@ -48,16 +49,18 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
       </head>
-      <body className="min-h-full flex flex-col bg-white text-gray-900">
+      <body className="min-h-full flex flex-col bg-surface text-text-primary">
         <script
           dangerouslySetInnerHTML={{
             __html: `if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js')}`,
           }}
         />
-        <SupabaseProvider>
-          <Navbar />
-          <main className="flex-1">{children}</main>
-        </SupabaseProvider>
+        <ThemeProvider>
+          <SupabaseProvider>
+            <Navbar />
+            <main className="flex-1">{children}</main>
+          </SupabaseProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

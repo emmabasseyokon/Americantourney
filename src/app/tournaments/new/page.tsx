@@ -53,7 +53,7 @@ export default function NewTournamentPage() {
 
   return (
     <div className="mx-auto max-w-md px-4 py-8">
-      <h1 className="text-2xl font-bold text-gray-900">Create Tournament</h1>
+      <h1 className="text-2xl font-bold text-text-primary">Create Tournament</h1>
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         <Input

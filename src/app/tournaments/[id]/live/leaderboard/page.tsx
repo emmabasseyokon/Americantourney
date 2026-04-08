@@ -51,7 +51,7 @@ export default function LiveLeaderboardPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
-      <h1 className="text-center text-2xl font-bold text-gray-900">
+      <h1 className="text-center text-2xl font-bold text-text-primary">
         Rankings
       </h1>
 
@@ -59,17 +59,17 @@ export default function LiveLeaderboardPage() {
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="border-b border-gray-200">
-              <th className="px-3 py-2 font-semibold text-gray-500">#</th>
-              <th className="px-3 py-2 font-semibold text-gray-500">Player</th>
+              <th className="px-3 py-2 font-semibold text-text-muted">#</th>
+              <th className="px-3 py-2 font-semibold text-text-muted">Player</th>
               {roundColumns.map((r) => (
                 <th
                   key={r}
-                  className="px-3 py-2 text-center font-semibold text-gray-500"
+                  className="px-3 py-2 text-center font-semibold text-text-muted"
                 >
                   R{r}
                 </th>
               ))}
-              <th className="px-3 py-2 text-center font-semibold text-gray-900">
+              <th className="px-3 py-2 text-center font-semibold text-text-primary">
                 Total
               </th>
             </tr>
@@ -82,23 +82,23 @@ export default function LiveLeaderboardPage() {
                   index < 3 ? "bg-yellow-50/50" : ""
                 }`}
               >
-                <td className="px-3 py-2 font-medium text-gray-400">
+                <td className="px-3 py-2 font-medium text-text-tertiary">
                   {index + 1}
                 </td>
-                <td className="px-3 py-2 font-medium text-gray-900">
+                <td className="px-3 py-2 font-medium text-text-primary">
                   {row.player.name}
                 </td>
                 {roundColumns.map((r) => (
                   <td
                     key={r}
-                    className="px-3 py-2 text-center text-gray-600"
+                    className="px-3 py-2 text-center text-text-secondary"
                   >
                     {row.roundScores[r] !== undefined
                       ? row.roundScores[r]
                       : "—"}
                   </td>
                 ))}
-                <td className="px-3 py-2 text-center font-bold text-gray-900">
+                <td className="px-3 py-2 text-center font-bold text-text-primary">
                   {row.total}
                 </td>
               </tr>

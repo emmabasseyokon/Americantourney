@@ -3,6 +3,8 @@
 import { createClient } from "@/lib/supabase/client";
 import { SkeletonList } from "@/components/ui/Skeleton";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { TvModeButton } from "@/components/ui/TvModeButton";
+import { useTvMode } from "@/hooks/useTvMode";
 import { formatGameScore, formatMatchScore } from "@/lib/scoreboard/tennis";
 import type { Scoreboard, ScoreState } from "@/lib/scoreboard/tennis";
 import { Activity, Trophy } from "lucide-react";
@@ -11,6 +13,7 @@ import { useEffect, useMemo, useState } from "react";
 
 export default function ScoreboardsLivePage() {
   const supabase = useMemo(() => createClient(), []);
+  const { isTvMode, controlsVisible, toggleTvMode } = useTvMode();
   const [scoreboards, setScoreboards] = useState<Scoreboard[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -62,7 +65,8 @@ export default function ScoreboardsLivePage() {
 
   return (
     <div className="min-h-screen bg-surface">
-      <ThemeToggle />
+      <ThemeToggle tvAutoHide={isTvMode} controlsVisible={controlsVisible} />
+      <TvModeButton isTvMode={isTvMode} controlsVisible={controlsVisible} onToggle={toggleTvMode} />
       {/* Header */}
       <div className="bg-surface-secondary px-4 py-4 border-b border-border-theme">
         <h1 className="text-lg font-bold text-text-primary">Live Matches</h1>
@@ -92,7 +96,7 @@ function MatchCard({ scoreboard }: { scoreboard: Scoreboard }) {
   return (
     <Link
       href={`/scoreboards/${scoreboard.id}/live`}
-      className="block rounded-xl bg-surface-secondary border border-border-theme p-4 hover:border-border-light transition-colors"
+      className="tv-match-card block rounded-xl bg-surface-secondary border border-border-theme p-4 hover:border-border-light transition-colors"
     >
       {/* Status + court */}
       <div className="flex items-center justify-between mb-3">
@@ -118,7 +122,7 @@ function MatchCard({ scoreboard }: { scoreboard: Scoreboard }) {
           {state.server === 1 && isLive && (
             <span className="h-1.5 w-1.5 rounded-full bg-green-400 flex-shrink-0" />
           )}
-          <span className="text-sm font-semibold text-text-primary uppercase">
+          <span className="tv-player-name text-sm font-semibold text-text-primary uppercase">
             {scoreboard.player1_name}
           </span>
         </div>
@@ -147,7 +151,7 @@ function MatchCard({ scoreboard }: { scoreboard: Scoreboard }) {
           {state.server === 2 && isLive && (
             <span className="h-1.5 w-1.5 rounded-full bg-green-400 flex-shrink-0" />
           )}
-          <span className="text-sm font-semibold text-text-primary uppercase">
+          <span className="tv-player-name text-sm font-semibold text-text-primary uppercase">
             {scoreboard.player2_name}
           </span>
         </div>

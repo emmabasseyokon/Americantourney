@@ -75,6 +75,14 @@ src/
 - **Public UI:** Dark-themed scoreboard with real-time updates via Supabase Realtime
 - **Live list:** `/scoreboards/live` shows all in-progress matches as cards, tap to open individual live view
 
+## TV Mode
+- **Purpose:** Fullscreen + scaled-up UI for TVs/projectors on live pages
+- **Hook:** `useTvMode()` in `src/hooks/useTvMode.ts` — manages fullscreen API, `.tv-mode` class on `<html>`, auto-hides controls after 5s idle, sessionStorage persistence
+- **Button:** `TvModeButton` component — floating button (Monitor/Minimize2 icons), auto-hides with controls in TV mode
+- **CSS classes:** `.tv-mode` on `<html>` activates scaling; child markers: `tv-scoreboard`, `tv-match-card`, `tv-player-name`, `tv-score`, `tv-tabs`, `tv-round-tab`, `tv-badge`, `tv-table`, `tv-bottom-nav`
+- **Pages:** Tournament live (`/tournaments/[id]/live`), Scoreboard live (`/scoreboards/[id]/live`), Scoreboards list live (`/scoreboards/live`)
+- **ThemeToggle integration:** Accepts `tvAutoHide` + `controlsVisible` props to auto-hide alongside TV mode button
+
 ## Realtime
 - Tournament live page subscribes to `postgres_changes` on `tournaments`, `players`, `rounds`, `matches` tables
 - Scoreboard live pages subscribe to `postgres_changes` on `scoreboards` table

@@ -3,6 +3,8 @@
 import { createClient } from "@/lib/supabase/client";
 import { SkeletonList } from "@/components/ui/Skeleton";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { TvModeButton } from "@/components/ui/TvModeButton";
+import { useTvMode } from "@/hooks/useTvMode";
 import type { Tournament, Player, Round } from "@/types/database";
 import {
   fetchAndEnrichMatchups,
@@ -29,6 +31,7 @@ export default function LiveTournamentPage() {
   const params = useParams();
   const tournamentId = params.id as string;
 
+  const { isTvMode, controlsVisible, toggleTvMode } = useTvMode();
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
   const [rounds, setRounds] = useState<Round[]>([]);
@@ -122,7 +125,8 @@ export default function LiveTournamentPage() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-3.5rem)] bg-surface">
-      <ThemeToggle />
+      <ThemeToggle tvAutoHide={isTvMode} controlsVisible={controlsVisible} />
+      <TvModeButton isTvMode={isTvMode} controlsVisible={controlsVisible} onToggle={toggleTvMode} />
       {/* Header */}
       <div className="border-b border-border-theme bg-surface px-4 py-3">
         <div className="mx-auto max-w-4xl">
@@ -161,7 +165,7 @@ export default function LiveTournamentPage() {
       </div>
 
       {/* Bottom Nav */}
-      <nav className="fixed bottom-0 left-0 right-0 z-20 border-t border-border-theme bg-surface">
+      <nav className="tv-bottom-nav fixed bottom-0 left-0 right-0 z-20 border-t border-border-theme bg-surface">
         <div className="mx-auto flex max-w-md">
           <TabButton
             active={activeTab === "players"}
@@ -202,7 +206,7 @@ function TabButton({
   return (
     <button
       onClick={onClick}
-      className={`flex flex-1 flex-col items-center gap-0.5 py-2.5 text-xs font-medium transition-colors cursor-pointer ${
+      className={`tv-tabs flex flex-1 flex-col items-center gap-0.5 py-2.5 text-xs font-medium transition-colors cursor-pointer ${
         active ? "text-blue-600" : "text-text-tertiary hover:text-text-secondary"
       }`}
     >
@@ -293,7 +297,7 @@ function LiveMatchupsTab({
           <button
             key={r}
             onClick={() => setActiveRound(r)}
-            className={`flex-1 min-w-[5rem] py-3 text-center text-xs font-bold uppercase tracking-wide transition-colors cursor-pointer ${
+            className={`tv-round-tab flex-1 min-w-[5rem] py-3 text-center text-xs font-bold uppercase tracking-wide transition-colors cursor-pointer ${
               activeRound === r
                 ? "text-blue-600 border-b-3 border-blue-600"
                 : "text-text-tertiary hover:text-text-secondary"
@@ -310,12 +314,12 @@ function LiveMatchupsTab({
           {currentRoundData?.matches.map((match) => (
             <div
               key={match.id}
-              className="rounded-xl border border-border-light bg-surface p-4 shadow-md"
+              className="tv-match-card rounded-xl border border-border-light bg-surface p-4 shadow-md"
             >
               {/* Card Header — status left, court right */}
               <div className="flex items-center justify-between mb-3">
                 <span
-                  className={`text-xs font-semibold uppercase tracking-wide ${
+                  className={`tv-badge text-xs font-semibold uppercase tracking-wide ${
                     isMatchNotReady(match, playerNotReady)
                       ? "text-red-500"
                       : getStatusColor(match.status)
@@ -335,7 +339,7 @@ function LiveMatchupsTab({
               {/* Team 1 */}
               <div className="flex items-center gap-2 mb-2">
                 <span
-                  className={`flex h-7 w-7 items-center justify-center rounded-md text-xs font-bold text-white ${
+                  className={`tv-score flex h-7 w-7 items-center justify-center rounded-md text-xs font-bold text-white ${
                     match.status === "completed" &&
                     match.team1_score > match.team2_score
                       ? "bg-green-500"
@@ -350,7 +354,7 @@ function LiveMatchupsTab({
                   {match.team1Players.map((p, i) => (
                     <span key={p.id} className="flex items-center gap-1">
                       {i > 0 && <span className="text-text-tertiary">/</span>}
-                      <span className="font-semibold text-text-primary uppercase">
+                      <span className="tv-player-name font-semibold text-text-primary uppercase">
                         {p.name}
                       </span>
                       {playerActiveCourt.has(p.id) && (
@@ -366,7 +370,7 @@ function LiveMatchupsTab({
               {/* Team 2 */}
               <div className="flex items-center gap-2">
                 <span
-                  className={`flex h-7 w-7 items-center justify-center rounded-md text-xs font-bold text-white ${
+                  className={`tv-score flex h-7 w-7 items-center justify-center rounded-md text-xs font-bold text-white ${
                     match.status === "completed" &&
                     match.team2_score > match.team1_score
                       ? "bg-green-500"
@@ -381,7 +385,7 @@ function LiveMatchupsTab({
                   {match.team2Players.map((p, i) => (
                     <span key={p.id} className="flex items-center gap-1">
                       {i > 0 && <span className="text-text-tertiary">/</span>}
-                      <span className="font-semibold text-text-primary uppercase">
+                      <span className="tv-player-name font-semibold text-text-primary uppercase">
                         {p.name}
                       </span>
                       {playerActiveCourt.has(p.id) && (
@@ -426,7 +430,7 @@ function LiveRankingsTab({
 
   return (
     <div className="overflow-x-auto bg-surface">
-      <table className="w-full text-left text-sm">
+      <table className="tv-table w-full text-left text-sm">
         <thead>
           <tr className="border-b border-border-theme text-xs uppercase tracking-wider text-text-tertiary">
             <th className="px-4 py-3 font-medium">#</th>

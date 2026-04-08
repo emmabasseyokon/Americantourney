@@ -3,6 +3,8 @@
 import { createClient } from "@/lib/supabase/client";
 import { SkeletonList } from "@/components/ui/Skeleton";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { TvModeButton } from "@/components/ui/TvModeButton";
+import { useTvMode } from "@/hooks/useTvMode";
 import { formatGameScore } from "@/lib/scoreboard/tennis";
 import type { Scoreboard, ScoreState } from "@/lib/scoreboard/tennis";
 import { Trophy } from "lucide-react";
@@ -14,6 +16,7 @@ export default function ScoreboardLivePage() {
   const params = useParams();
   const scoreboardId = params.id as string;
 
+  const { isTvMode, controlsVisible, toggleTvMode } = useTvMode();
   const [scoreboard, setScoreboard] = useState<Scoreboard | null>(null);
 
   useEffect(() => {
@@ -73,7 +76,8 @@ export default function ScoreboardLivePage() {
 
   return (
     <div className="min-h-screen bg-surface flex flex-col items-center justify-center px-4 py-8">
-      <ThemeToggle />
+      <ThemeToggle tvAutoHide={isTvMode} controlsVisible={controlsVisible} />
+      <TvModeButton isTvMode={isTvMode} controlsVisible={controlsVisible} onToggle={toggleTvMode} />
       {/* Status */}
       <div className="mb-4 text-center">
         {scoreboard.court_name && (
@@ -105,7 +109,7 @@ export default function ScoreboardLivePage() {
       )}
 
       {/* Scoreboard */}
-      <div className="w-full max-w-lg rounded-2xl bg-surface-secondary border border-border-theme overflow-hidden shadow-2xl">
+      <div className="tv-scoreboard w-full max-w-lg rounded-2xl bg-surface-secondary border border-border-theme overflow-hidden shadow-2xl">
         {/* Header */}
         <div
           className="grid bg-surface-secondary border-b border-border-theme text-center text-xs font-bold text-text-muted uppercase tracking-wide"

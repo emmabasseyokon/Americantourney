@@ -11,6 +11,16 @@ import { Activity, Trophy } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
+function TennisBall({ className = "h-3 w-3" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <circle cx="12" cy="12" r="10" fill="#C8E644" stroke="#8AAB1A" strokeWidth="1.5" />
+      <path d="M6 3.5C9.5 7 9.5 17 6 20.5" stroke="#8AAB1A" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+      <path d="M18 3.5C14.5 7 14.5 17 18 20.5" stroke="#8AAB1A" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+    </svg>
+  );
+}
+
 export default function ScoreboardsLivePage() {
   const supabase = useMemo(() => createClient(), []);
   const { isTvMode, controlsVisible, toggleTvMode } = useTvMode();
@@ -23,7 +33,7 @@ export default function ScoreboardsLivePage() {
         .from("scoreboards")
         .select("*")
         .in("status", ["in_progress", "pending"])
-        .order("updated_at", { ascending: false });
+        .order("created_at", { ascending: false });
 
       setScoreboards(data ?? []);
       setLoading(false);
@@ -119,9 +129,9 @@ function MatchCard({ scoreboard }: { scoreboard: Scoreboard }) {
       {/* Player 1 */}
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-2">
-          {state.server === 1 && isLive && (
-            <span className="h-1.5 w-1.5 rounded-full bg-green-400 flex-shrink-0" />
-          )}
+          <span className="flex-shrink-0 w-3">
+            {state.server === 1 && isLive && <TennisBall className="h-3 w-3" />}
+          </span>
           <span className="tv-player-name text-sm font-semibold text-text-primary uppercase">
             {scoreboard.player1_name}
           </span>
@@ -148,9 +158,9 @@ function MatchCard({ scoreboard }: { scoreboard: Scoreboard }) {
       {/* Player 2 */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          {state.server === 2 && isLive && (
-            <span className="h-1.5 w-1.5 rounded-full bg-green-400 flex-shrink-0" />
-          )}
+          <span className="flex-shrink-0 w-3">
+            {state.server === 2 && isLive && <TennisBall className="h-3 w-3" />}
+          </span>
           <span className="tv-player-name text-sm font-semibold text-text-primary uppercase">
             {scoreboard.player2_name}
           </span>

@@ -14,6 +14,16 @@ import { Undo2, Share2, Trophy } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
+function TennisBall({ className = "h-3 w-3" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <circle cx="12" cy="12" r="10" fill="#C8E644" stroke="#8AAB1A" strokeWidth="1.5" />
+      <path d="M6 3.5C9.5 7 9.5 17 6 20.5" stroke="#8AAB1A" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+      <path d="M18 3.5C14.5 7 14.5 17 18 20.5" stroke="#8AAB1A" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+    </svg>
+  );
+}
+
 export default function ScoreboardAdminPage() {
   const { supabase } = useSupabase();
   const params = useParams();
@@ -181,9 +191,9 @@ export default function ScoreboardAdminPage() {
           }}
         >
           <div className="px-4 py-3 text-left flex items-center gap-2">
-            {state.server === 1 && !isComplete && (
-              <span className="h-2 w-2 rounded-full bg-green-500 flex-shrink-0" />
-            )}
+            <span className="flex-shrink-0 w-3">
+              {state.server === 1 && !isComplete && <TennisBall className="h-3 w-3" />}
+            </span>
             <span className={`text-sm font-semibold uppercase truncate ${state.matchWinner === 1 ? "text-green-700" : "text-text-primary"}`}>
               {scoreboard.player1_name}
             </span>
@@ -221,9 +231,9 @@ export default function ScoreboardAdminPage() {
           }}
         >
           <div className="px-4 py-3 text-left flex items-center gap-2">
-            {state.server === 2 && !isComplete && (
-              <span className="h-2 w-2 rounded-full bg-green-500 flex-shrink-0" />
-            )}
+            <span className="flex-shrink-0 w-3">
+              {state.server === 2 && !isComplete && <TennisBall className="h-3 w-3" />}
+            </span>
             <span className={`text-sm font-semibold uppercase truncate ${state.matchWinner === 2 ? "text-green-700" : "text-text-primary"}`}>
               {scoreboard.player2_name}
             </span>

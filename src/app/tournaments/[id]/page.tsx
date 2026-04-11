@@ -1429,7 +1429,7 @@ function RankingsTab({
             <tr
               key={row.player.id}
               className={`border-b border-border-light ${
-                index < 3 ? "bg-yellow-50/60" : ""
+                ""
               }`}
             >
               <td className="px-4 py-3 text-text-tertiary font-medium">

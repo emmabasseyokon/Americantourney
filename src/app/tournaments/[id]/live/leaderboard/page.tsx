@@ -79,7 +79,7 @@ export default function LiveLeaderboardPage() {
               <tr
                 key={row.player.id}
                 className={`border-b border-gray-100 ${
-                  index < 3 ? "bg-yellow-50/50" : ""
+                  ""
                 }`}
               >
                 <td className="px-3 py-2 font-medium text-text-tertiary">

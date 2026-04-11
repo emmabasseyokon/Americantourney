@@ -69,7 +69,7 @@ export default function ScoreboardsLivePage() {
       <TvModeButton isTvMode={isTvMode} controlsVisible={controlsVisible} onToggle={toggleTvMode} />
       {/* Header */}
       <div className="bg-surface-secondary px-4 py-4 border-b border-border-theme">
-        <h1 className="text-lg font-bold text-text-primary">Live Matches</h1>
+        <h1 className="mx-auto max-w-lg text-lg font-bold text-text-primary">Live Matches</h1>
       </div>
 
       {scoreboards.length === 0 ? (
@@ -78,7 +78,7 @@ export default function ScoreboardsLivePage() {
           <p className="text-sm">No live matches right now</p>
         </div>
       ) : (
-        <div className="p-4 space-y-3">
+        <div className="mx-auto max-w-lg p-4 space-y-3">
           {scoreboards.map((sb) => (
             <MatchCard key={sb.id} scoreboard={sb} />
           ))}

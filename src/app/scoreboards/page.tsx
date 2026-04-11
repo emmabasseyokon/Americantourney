@@ -6,9 +6,10 @@ import { SkeletonList } from "@/components/ui/Skeleton";
 import { sanitizeString } from "@/lib/utils/security";
 import { createInitialState, formatMatchScore } from "@/lib/scoreboard/tennis";
 import type { Scoreboard } from "@/lib/scoreboard/tennis";
-import { Plus, MoreVertical, X, Activity } from "lucide-react";
+import { Plus, MoreVertical, X, Activity, Share2, Copy } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+
 
 export default function ScoreboardsPage() {
   const { supabase, user, loading } = useSupabase();
@@ -23,6 +24,12 @@ export default function ScoreboardsPage() {
   const [courtName, setCourtName] = useState("");
   const [error, setError] = useState("");
   const [creating, setCreating] = useState(false);
+
+  // Share state
+  const [copied, setCopied] = useState(false);
+
+  // Edit state
+  const [editingScoreboard, setEditingScoreboard] = useState<Scoreboard | null>(null);
 
   // Menu state
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
@@ -83,7 +90,65 @@ export default function ScoreboardsPage() {
     }
 
     setScoreboards([data, ...scoreboards]);
+    closeModal();
+  }
+
+  function handleEdit(sb: Scoreboard) {
+    setEditingScoreboard(sb);
+    setPlayer1Name(sb.player1_name);
+    setPlayer2Name(sb.player2_name);
+    setBestOf(String(sb.best_of));
+    setCourtName(sb.court_name ?? "");
+    setError("");
+    setShowModal(true);
+  }
+
+  async function handleSaveEdit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingScoreboard) return;
+    setError("");
+    setCreating(true);
+
+    const cleanP1 = sanitizeString(player1Name, 50);
+    const cleanP2 = sanitizeString(player2Name, 50);
+    if (!cleanP1 || !cleanP2) {
+      setError("Both player names are required.");
+      setCreating(false);
+      return;
+    }
+
+    const cleanCourt = courtName ? sanitizeString(courtName, 50) : null;
+
+    const { error: dbError } = await supabase
+      .from("scoreboards")
+      .update({
+        player1_name: cleanP1,
+        player2_name: cleanP2,
+        best_of: parseInt(bestOf),
+        court_name: cleanCourt,
+      })
+      .eq("id", editingScoreboard.id);
+
+    if (dbError) {
+      setError(dbError.message);
+      setCreating(false);
+      return;
+    }
+
+    setScoreboards((prev) =>
+      prev.map((s) =>
+        s.id === editingScoreboard.id
+          ? { ...s, player1_name: cleanP1, player2_name: cleanP2, best_of: parseInt(bestOf) as 3 | 5, court_name: cleanCourt }
+          : s
+      )
+    );
+    closeModal();
+  }
+
+  function closeModal() {
     setShowModal(false);
+    setEditingScoreboard(null);
+    setError("");
     setPlayer1Name("");
     setPlayer2Name("");
     setCourtName("");
@@ -122,11 +187,18 @@ export default function ScoreboardsPage() {
     );
   }
 
+  function copyShareLink() {
+    const url = `${window.location.origin}/scoreboards/live`;
+    navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
   if (loading || fetching) {
     return (
       <div className="flex flex-col h-[calc(100vh-3.5rem)] bg-surface">
-        <div className="bg-green-600 px-4 py-4">
-          <div className="h-5 w-40 animate-pulse rounded bg-green-400" />
+        <div className="bg-blue-600 px-4 py-4">
+          <div className="h-5 w-40 animate-pulse rounded bg-blue-400" />
         </div>
         <SkeletonList rows={8} />
       </div>
@@ -136,8 +208,22 @@ export default function ScoreboardsPage() {
   return (
     <div className="flex flex-col h-[calc(100vh-3.5rem)] bg-surface">
       {/* Header */}
-      <div className="bg-green-600 px-4 py-4">
+      <div className="bg-blue-600 px-4 py-4 flex items-center justify-between">
         <h1 className="text-lg font-bold text-white">Tennis Scoreboards</h1>
+        <button
+          onClick={copyShareLink}
+          className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium text-white/90 hover:bg-blue-500 transition-colors cursor-pointer"
+        >
+          {copied ? (
+            <>
+              <Copy className="h-3.5 w-3.5" /> Copied
+            </>
+          ) : (
+            <>
+              <Share2 className="h-3.5 w-3.5" /> Share
+            </>
+          )}
+        </button>
       </div>
 
       {/* List */}
@@ -198,6 +284,17 @@ export default function ScoreboardsPage() {
                         onClick={() => setMenuOpen(null)}
                       />
                       <div className="absolute right-0 top-8 z-40 w-36 rounded-lg border border-border-theme bg-surface py-1 shadow-lg">
+                        {sb.status === "pending" && (
+                          <button
+                            onClick={() => {
+                              handleEdit(sb);
+                              setMenuOpen(null);
+                            }}
+                            className="flex w-full items-center px-4 py-2.5 text-sm text-text-primary hover:bg-surface-secondary cursor-pointer"
+                          >
+                            Edit
+                          </button>
+                        )}
                         <button
                           onClick={() => {
                             setDeletingScoreboard(sb);
@@ -220,7 +317,7 @@ export default function ScoreboardsPage() {
       {/* FAB */}
       <button
         onClick={() => setShowModal(true)}
-        className="fixed bottom-6 right-6 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-green-600 text-white shadow-lg hover:bg-green-700 transition-colors cursor-pointer"
+        className="fixed bottom-6 right-6 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 transition-colors cursor-pointer"
       >
         <Plus className="h-6 w-6" />
       </button>
@@ -260,23 +357,19 @@ export default function ScoreboardsPage() {
       {showModal && (
         <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-black/40">
           <div className="w-full max-w-md rounded-t-2xl sm:rounded-lg bg-surface shadow-xl overflow-hidden">
-            <div className="flex items-center justify-between bg-green-600 px-5 py-4">
-              <h2 className="text-base font-bold text-white">New Match</h2>
+            <div className="flex items-center justify-between bg-blue-600 px-5 py-4">
+              <h2 className="text-base font-bold text-white">
+                {editingScoreboard ? "Edit Match" : "New Match"}
+              </h2>
               <button
-                onClick={() => {
-                  setShowModal(false);
-                  setError("");
-                  setPlayer1Name("");
-                  setPlayer2Name("");
-                  setCourtName("");
-                }}
+                onClick={closeModal}
                 className="text-white/80 hover:text-white cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <form onSubmit={handleCreate} className="p-5 space-y-0">
+            <form onSubmit={editingScoreboard ? handleSaveEdit : handleCreate} className="p-5 space-y-0">
               <div className="border-b border-border-theme py-3">
                 <input
                   type="text"
@@ -328,10 +421,12 @@ export default function ScoreboardsPage() {
               <div className="pt-4">
                 <Button
                   type="submit"
-                  className="w-full bg-green-500 hover:bg-green-600"
+                  className="w-full bg-blue-600 hover:bg-blue-700"
                   disabled={creating}
                 >
-                  {creating ? "Creating..." : "CREATE MATCH"}
+                  {creating
+                    ? (editingScoreboard ? "Saving..." : "Creating...")
+                    : (editingScoreboard ? "SAVE CHANGES" : "CREATE MATCH")}
                 </Button>
               </div>
             </form>

@@ -118,19 +118,19 @@ export default function ScoreboardAdminPage() {
   return (
     <div className="flex flex-col h-[calc(100vh-3.5rem)] bg-surface-secondary">
       {/* Header */}
-      <div className="bg-green-600 px-4 py-3 flex items-center justify-between">
+      <div className="bg-blue-600 px-4 py-3 flex items-center justify-between">
         <div>
           <h1 className="text-sm font-bold text-white">
             {scoreboard.player1_name} vs {scoreboard.player2_name}
           </h1>
           {scoreboard.court_name && (
-            <p className="text-xs text-green-200">{scoreboard.court_name}</p>
+            <p className="text-xs text-blue-200">{scoreboard.court_name}</p>
           )}
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={handleShare}
-            className="flex items-center gap-1 rounded-lg bg-green-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-400 transition-colors cursor-pointer"
+            className="flex items-center gap-1 rounded-lg bg-blue-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-400 transition-colors cursor-pointer"
           >
             <Share2 className="h-3.5 w-3.5" />
             Share Live
@@ -267,7 +267,7 @@ export default function ScoreboardAdminPage() {
             <button
               onClick={() => handlePoint(1)}
               disabled={saving}
-              className="rounded-xl bg-green-600 py-6 text-center text-sm font-bold text-white uppercase hover:bg-green-700 transition-colors disabled:opacity-50 cursor-pointer shadow-sm"
+              className="rounded-xl bg-blue-600 py-6 text-center text-sm font-bold text-white uppercase hover:bg-blue-700 transition-colors disabled:opacity-50 cursor-pointer shadow-sm"
             >
               Point<br />
               <span className="text-lg">{scoreboard.player1_name}</span>
@@ -275,7 +275,7 @@ export default function ScoreboardAdminPage() {
             <button
               onClick={() => handlePoint(2)}
               disabled={saving}
-              className="rounded-xl bg-blue-600 py-6 text-center text-sm font-bold text-white uppercase hover:bg-blue-700 transition-colors disabled:opacity-50 cursor-pointer shadow-sm"
+              className="rounded-xl bg-indigo-600 py-6 text-center text-sm font-bold text-white uppercase hover:bg-indigo-700 transition-colors disabled:opacity-50 cursor-pointer shadow-sm"
             >
               Point<br />
               <span className="text-lg">{scoreboard.player2_name}</span>

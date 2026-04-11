@@ -146,7 +146,11 @@ export default function TournamentDetailPage() {
       .single();
 
     if (dbError) {
-      setAddError(dbError.message);
+      setAddError(
+        dbError.code === "23505"
+          ? "A player with this name already exists in the tournament."
+          : dbError.message
+      );
       setAddLoading(false);
       return;
     }
@@ -188,7 +192,11 @@ export default function TournamentDetailPage() {
       .eq("id", editingPlayer.id);
 
     if (dbError) {
-      setAddError(dbError.message);
+      setAddError(
+        dbError.code === "23505"
+          ? "A player with this name already exists in the tournament."
+          : dbError.message
+      );
       setAddLoading(false);
       return;
     }

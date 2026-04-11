@@ -71,7 +71,11 @@ export default function PlayersPage() {
       .single();
 
     if (dbError) {
-      setError(dbError.message);
+      setError(
+        dbError.code === "23505"
+          ? "A player with this name already exists in the tournament."
+          : dbError.message
+      );
       setLoading(false);
       return;
     }

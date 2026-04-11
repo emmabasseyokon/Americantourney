@@ -52,9 +52,10 @@ export async function updateSession(request: NextRequest) {
   const publicRoutes = ["/", "/auth/login", "/auth/register", "/auth/callback"];
   const isPublicRoute = publicRoutes.includes(pathname);
   const isLiveRoute = pathname.includes("/live");
+  const isWebhook = pathname === "/api/payments/webhook";
 
-  // Allow public and live routes without auth
-  if (isPublicRoute || isLiveRoute) {
+  // Allow public, live, and webhook routes without auth
+  if (isPublicRoute || isLiveRoute || isWebhook) {
     return supabaseResponse;
   }
 

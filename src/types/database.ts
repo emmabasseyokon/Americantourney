@@ -13,6 +13,8 @@ export interface Profile {
   email: string;
   display_name: string | null;
   avatar_url: string | null;
+  free_tournament_used: boolean;
+  free_scoreboard_used: boolean;
   created_at: string;
 }
 
@@ -60,6 +62,24 @@ export interface MatchPlayer {
   match_id: string;
   player_id: string;
   team: 1 | 2;
+}
+
+export type PaymentStatus = "pending" | "success" | "failed";
+export type PaymentItemType = "tournament" | "scoreboard";
+
+export interface Payment {
+  id: string;
+  user_id: string;
+  item_type: PaymentItemType;
+  amount_kobo: number;
+  currency: "NGN" | "USD";
+  paystack_reference: string;
+  paystack_access_code: string | null;
+  status: PaymentStatus;
+  item_metadata: Record<string, unknown>;
+  created_item_id: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface LeaderboardEntry {

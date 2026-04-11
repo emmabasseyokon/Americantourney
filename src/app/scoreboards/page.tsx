@@ -6,15 +6,22 @@ import { SkeletonList } from "@/components/ui/Skeleton";
 import { sanitizeString } from "@/lib/utils/security";
 import { createInitialState, formatMatchScore } from "@/lib/scoreboard/tennis";
 import type { Scoreboard } from "@/lib/scoreboard/tennis";
-import { Plus, MoreVertical, X, Activity, Share2, Copy } from "lucide-react";
+import { usePaymentGate } from "@/hooks/usePaymentGate";
+import { useCurrency } from "@/hooks/useCurrency";
+import { Plus, MoreVertical, X, Activity, Share2, Copy, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
 
 export default function ScoreboardsPage() {
   const { supabase, user, loading } = useSupabase();
+  const { isFree, loading: paymentLoading, getButtonLabel, initializePayment } = usePaymentGate("scoreboard");
+  const { currency, toggleCurrency } = useCurrency();
   const [scoreboards, setScoreboards] = useState<Scoreboard[]>([]);
   const [fetching, setFetching] = useState(true);
+
+  // Payment failed banner
+  const [paymentFailed, setPaymentFailed] = useState(false);
 
   // Create modal state
   const [showModal, setShowModal] = useState(false);
@@ -37,6 +44,14 @@ export default function ScoreboardsPage() {
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const [deletingScoreboard, setDeletingScoreboard] = useState<Scoreboard | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("payment") === "failed" || params.get("payment") === "error") {
+      setPaymentFailed(true);
+      window.history.replaceState({}, "", "/scoreboards");
+    }
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -71,30 +86,39 @@ export default function ScoreboardsPage() {
 
     const cleanCourt = courtName ? sanitizeString(courtName, 50) : null;
 
-    const { data, error: dbError } = await supabase
-      .from("scoreboards")
-      .insert({
-        player1_name: cleanP1,
-        player2_name: cleanP2,
-        best_of: parseInt(bestOf),
-        sport_type: sportType,
-        golden_point: goldenPoint,
-        court_name: cleanCourt,
-        score_state: createInitialState(),
-        status: "pending",
-        created_by: user.id,
-      })
-      .select()
-      .single();
+    try {
+      const result = await initializePayment(
+        {
+          player1_name: cleanP1,
+          player2_name: cleanP2,
+          best_of: parseInt(bestOf),
+          sport_type: sportType,
+          golden_point: goldenPoint,
+          court_name: cleanCourt,
+        },
+        currency
+      );
 
-    if (dbError) {
-      setError(dbError.message);
+      if (result.free) {
+        // Fetch the created scoreboard and add to list
+        const { data } = await supabase
+          .from("scoreboards")
+          .select("*")
+          .eq("id", result.item_id)
+          .single();
+
+        if (data) {
+          setScoreboards([data, ...scoreboards]);
+        }
+        closeModal();
+      } else {
+        // Redirect to Paystack checkout
+        window.location.href = result.authorization_url;
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Payment failed");
       setCreating(false);
-      return;
     }
-
-    setScoreboards([data, ...scoreboards]);
-    closeModal();
   }
 
   function handleEdit(sb: Scoreboard) {
@@ -235,6 +259,17 @@ export default function ScoreboardsPage() {
           )}
         </button>
       </div>
+
+      {/* Payment Failed Banner */}
+      {paymentFailed && (
+        <div className="flex items-center gap-2 bg-red-50 border-b border-red-200 px-4 py-3">
+          <AlertCircle className="h-4 w-4 text-red-600 shrink-0" />
+          <p className="text-sm text-red-700">Payment was not completed. Please try again.</p>
+          <button onClick={() => setPaymentFailed(false)} className="ml-auto text-red-400 hover:text-red-600 cursor-pointer">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
       {/* List */}
       <div className="flex-1 overflow-y-auto">
@@ -462,15 +497,28 @@ export default function ScoreboardsPage() {
                 <p className="pt-3 text-sm text-red-600">{error}</p>
               )}
 
+              {!editingScoreboard && !isFree && isFree !== null && (
+                <div className="flex items-center justify-between pt-3">
+                  <span className="text-xs text-text-tertiary">Currency</span>
+                  <button
+                    type="button"
+                    onClick={toggleCurrency}
+                    className="text-xs font-medium text-blue-600 hover:text-blue-700 cursor-pointer"
+                  >
+                    {currency === "NGN" ? "🇳🇬 NGN" : "🇺🇸 USD"} — tap to switch
+                  </button>
+                </div>
+              )}
+
               <div className="pt-4">
                 <Button
                   type="submit"
                   className="w-full bg-blue-600 hover:bg-blue-700"
-                  disabled={creating}
+                  disabled={creating || (!editingScoreboard && paymentLoading)}
                 >
-                  {creating
-                    ? (editingScoreboard ? "Saving..." : "Creating...")
-                    : (editingScoreboard ? "SAVE CHANGES" : "CREATE MATCH")}
+                  {editingScoreboard
+                    ? (creating ? "Saving..." : "SAVE CHANGES")
+                    : (creating ? "Processing..." : getButtonLabel(currency))}
                 </Button>
               </div>
             </form>

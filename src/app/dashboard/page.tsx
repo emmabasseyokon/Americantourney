@@ -5,7 +5,9 @@ import { useSupabase } from "@/components/providers/SupabaseProvider";
 import type { Tournament } from "@/types/database";
 import { SkeletonList } from "@/components/ui/Skeleton";
 import { sanitizeString } from "@/lib/utils/security";
-import { Plus, MoreVertical, Trophy, X } from "lucide-react";
+import { usePaymentGate } from "@/hooks/usePaymentGate";
+import { useCurrency } from "@/hooks/useCurrency";
+import { Plus, MoreVertical, Trophy, X, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -13,8 +15,13 @@ import { useEffect, useState } from "react";
 export default function DashboardPage() {
   const { supabase, user, loading } = useSupabase();
   const router = useRouter();
+  const { isFree, loading: paymentLoading, getButtonLabel, initializePayment } = usePaymentGate("tournament");
+  const { currency, toggleCurrency } = useCurrency();
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [fetching, setFetching] = useState(true);
+
+  // Payment failed banner
+  const [paymentFailed, setPaymentFailed] = useState(false);
 
   // Create modal state
   const [showModal, setShowModal] = useState(false);
@@ -34,6 +41,16 @@ export default function DashboardPage() {
   const [editSaving, setEditSaving] = useState(false);
   const [deletingTournament, setDeletingTournament] = useState<Tournament | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    // Check for payment failure from callback redirect
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("payment") === "failed" || params.get("payment") === "error") {
+      setPaymentFailed(true);
+      // Clean URL
+      window.history.replaceState({}, "", "/dashboard");
+    }
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -65,25 +82,26 @@ export default function DashboardPage() {
       return;
     }
 
-    const { data, error: dbError } = await supabase
-      .from("tournaments")
-      .insert({
-        name: cleanName,
-        total_rounds: parseInt(totalRounds),
-        max_players: parseInt(maxPlayers),
-        status: "registration",
-        created_by: user.id,
-      })
-      .select()
-      .single();
+    try {
+      const result = await initializePayment(
+        {
+          name: cleanName,
+          total_rounds: parseInt(totalRounds),
+          max_players: parseInt(maxPlayers),
+        },
+        currency
+      );
 
-    if (dbError) {
-      setError(dbError.message);
+      if (result.free) {
+        router.push(`/tournaments/${result.item_id}`);
+      } else {
+        // Redirect to Paystack checkout
+        window.location.href = result.authorization_url;
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Payment failed");
       setCreating(false);
-      return;
     }
-
-    router.push(`/tournaments/${data.id}`);
   }
 
   async function handleEdit(e: React.FormEvent) {
@@ -153,6 +171,17 @@ export default function DashboardPage() {
       <div className="bg-blue-600 px-4 py-4">
         <h1 className="text-lg font-bold text-white">American Tournaments</h1>
       </div>
+
+      {/* Payment Failed Banner */}
+      {paymentFailed && (
+        <div className="flex items-center gap-2 bg-red-50 border-b border-red-200 px-4 py-3">
+          <AlertCircle className="h-4 w-4 text-red-600 shrink-0" />
+          <p className="text-sm text-red-700">Payment was not completed. Please try again.</p>
+          <button onClick={() => setPaymentFailed(false)} className="ml-auto text-red-400 hover:text-red-600 cursor-pointer">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
       {/* Tournament List */}
       <div className="flex-1 overflow-y-auto">
@@ -404,13 +433,26 @@ export default function DashboardPage() {
                 <p className="pt-3 text-sm text-red-600">{error}</p>
               )}
 
+              {!isFree && isFree !== null && (
+                <div className="flex items-center justify-between pt-3">
+                  <span className="text-xs text-text-tertiary">Currency</span>
+                  <button
+                    type="button"
+                    onClick={toggleCurrency}
+                    className="text-xs font-medium text-blue-600 hover:text-blue-700 cursor-pointer"
+                  >
+                    {currency === "NGN" ? "🇳🇬 NGN" : "🇺🇸 USD"} — tap to switch
+                  </button>
+                </div>
+              )}
+
               <div className="pt-4">
                 <Button
                   type="submit"
                   className="w-full bg-blue-500 hover:bg-blue-600"
-                  disabled={creating}
+                  disabled={creating || paymentLoading}
                 >
-                  {creating ? "Creating..." : "SUBMIT"}
+                  {creating ? "Processing..." : getButtonLabel(currency)}
                 </Button>
               </div>
             </form>

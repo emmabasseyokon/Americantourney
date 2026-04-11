@@ -21,6 +21,7 @@ npm run lint      # ESLint
 ```
 src/
 ├── app/                         # Next.js App Router pages
+│   ├── api/payments/            # initialize/, callback/, webhook/ — Paystack payment routes
 │   ├── auth/                    # Login, register, callback
 │   ├── dashboard/               # Admin: tournament list with kebab menu (edit/delete)
 │   ├── scoreboards/
@@ -41,8 +42,10 @@ src/
 │   ├── ui/                      # Button, Input, Select, Skeleton, ThemeToggle
 │   ├── layout/                  # Navbar (hidden on /live pages, logo → dashboard when logged in)
 │   └── providers/               # SupabaseProvider, ThemeProvider
+├── hooks/                       # useTvMode, usePaymentGate, useCurrency
 ├── lib/
-│   ├── supabase/                # client.ts, server.ts, middleware.ts
+│   ├── supabase/                # client.ts, server.ts (includes service-role client), middleware.ts
+│   ├── paystack.ts              # Server-only Paystack API wrapper
 │   ├── draw/                    # americano.ts (draw algorithm), types.ts
 │   ├── scoreboard/              # tennis.ts (scoring engine, types, display helpers)
 │   └── utils/
@@ -144,12 +147,27 @@ src/
 - **RLS:** Every table has Row Level Security enabled with owner-based policies for write operations
 - **SQL injection:** Not applicable — Supabase JS client uses parameterized queries; DB `CHECK` constraints validate enums and score ranges
 
+## Payment Gating (Paystack)
+- **Model:** Per-item payment — 1 free tournament + 1 free scoreboard per account (lifetime, not restored on deletion), then paid
+- **Prices:** Tournaments: ₦20,000 / $20 — Scoreboards: ₦2,000 / $2
+- **Provider:** Paystack (redirect-based checkout, supports NGN + USD)
+- **Flow:** Client calls `POST /api/payments/initialize` → server checks free slot → if free, creates item directly; if paid, initializes Paystack transaction and returns `authorization_url` → user redirected to Paystack → callback verifies and creates item → webhook as safety net
+- **Free slot claiming:** Atomic `UPDATE profiles SET free_x_used = true WHERE free_x_used = false` prevents double-claims
+- **Idempotent item creation:** `WHERE created_item_id IS NULL` guard prevents callback + webhook race from creating duplicates
+- **Currency auto-detect:** NGN for `Africa/Lagos` timezone, USD otherwise; persisted to localStorage; toggle in create modals
+- **Hooks:** `usePaymentGate(itemType)` — checks free status, returns button label and `initializePayment()`; `useCurrency()` — auto-detect + toggle
+- **API routes:** `/api/payments/initialize` (POST), `/api/payments/callback` (GET), `/api/payments/webhook` (POST)
+- **Webhook:** Signature verified via HMAC SHA-512, uses service-role Supabase client (bypasses RLS)
+- **Migration:** `supabase/migrations/002_payments.sql`
+
 ## Database
-7 tables in Supabase: `profiles`, `tournaments`, `players`, `rounds`, `matches`, `match_players`, `scoreboards`
-Migration file: `supabase/migrations/001_initial_schema.sql`
+8 tables in Supabase: `profiles`, `tournaments`, `players`, `rounds`, `matches`, `match_players`, `scoreboards`, `payments`
+Migration files: `supabase/migrations/001_initial_schema.sql`, `supabase/migrations/002_payments.sql`
 
 ## Environment Variables
 ```
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
+PAYSTACK_SECRET_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
 ```

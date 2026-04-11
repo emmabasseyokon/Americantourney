@@ -144,7 +144,7 @@ src/
 
 ## Database
 7 tables in Supabase: `profiles`, `tournaments`, `players`, `rounds`, `matches`, `match_players`, `scoreboards`
-Migration files: `supabase/migrations/001_initial_schema.sql`, `002_scoreboards.sql`
+Migration file: `supabase/migrations/001_initial_schema.sql`
 
 ## Environment Variables
 ```

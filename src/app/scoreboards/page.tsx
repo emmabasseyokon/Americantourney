@@ -192,7 +192,7 @@ export default function ScoreboardsPage() {
       );
     return (
       <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-600">
-        Pending
+        Not Started
       </span>
     );
   }
@@ -255,12 +255,9 @@ export default function ScoreboardsPage() {
                   href={`/scoreboards/${sb.id}`}
                   className="flex-1 min-w-0"
                 >
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-text-primary truncate">
-                      {sb.player1_name} vs {sb.player2_name}
-                    </span>
-                    {getStatusBadge(sb.status)}
-                  </div>
+                  <span className="text-sm font-medium text-text-primary truncate">
+                    {sb.player1_name} vs {sb.player2_name}
+                  </span>
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className="text-xs text-text-tertiary capitalize">
                       {sb.sport_type} — Best of {sb.best_of}
@@ -275,6 +272,9 @@ export default function ScoreboardsPage() {
                         {formatMatchScore(sb.score_state)}
                       </span>
                     )}
+                  </div>
+                  <div className="mt-1">
+                    {getStatusBadge(sb.status)}
                   </div>
                 </Link>
                 <div className="relative ml-2">

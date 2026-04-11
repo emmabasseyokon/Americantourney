@@ -12,9 +12,9 @@ import { ArrowLeft, Trophy } from "lucide-react";
 function TennisBall({ className = "h-3 w-3" }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className}>
-      <circle cx="12" cy="12" r="10" fill="#C8E644" stroke="#8AAB1A" strokeWidth="1.5" />
-      <path d="M6 3.5C9.5 7 9.5 17 6 20.5" stroke="#8AAB1A" strokeWidth="1.5" strokeLinecap="round" fill="none" />
-      <path d="M18 3.5C14.5 7 14.5 17 18 20.5" stroke="#8AAB1A" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+      <circle cx="12" cy="12" r="10" fill="#4ADE80" stroke="#16A34A" strokeWidth="1.5" />
+      <path d="M6 3.5C9.5 7 9.5 17 6 20.5" stroke="#16A34A" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+      <path d="M18 3.5C14.5 7 14.5 17 18 20.5" stroke="#16A34A" strokeWidth="1.5" strokeLinecap="round" fill="none" />
     </svg>
   );
 }

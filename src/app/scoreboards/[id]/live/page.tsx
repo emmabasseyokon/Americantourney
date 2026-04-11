@@ -7,7 +7,8 @@ import { TvModeButton } from "@/components/ui/TvModeButton";
 import { useTvMode } from "@/hooks/useTvMode";
 import { formatGameScore } from "@/lib/scoreboard/tennis";
 import type { Scoreboard, ScoreState } from "@/lib/scoreboard/tennis";
-import { Trophy } from "lucide-react";
+import { ArrowLeft, Trophy } from "lucide-react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
@@ -78,6 +79,15 @@ export default function ScoreboardLivePage() {
     <div className="min-h-screen bg-surface flex flex-col items-center justify-center px-4 py-8">
       <ThemeToggle tvAutoHide={isTvMode} controlsVisible={controlsVisible} />
       <TvModeButton isTvMode={isTvMode} controlsVisible={controlsVisible} onToggle={toggleTvMode} />
+
+      {/* Back button */}
+      <Link
+        href="/scoreboards/live"
+        className="fixed top-4 left-4 z-50 flex h-9 w-9 items-center justify-center rounded-full bg-surface-secondary border border-border-theme text-text-secondary hover:bg-surface-tertiary transition-colors shadow-lg"
+      >
+        <ArrowLeft className="h-4 w-4" />
+      </Link>
+
       {/* Status */}
       <div className="mb-4 text-center">
         {scoreboard.court_name && (

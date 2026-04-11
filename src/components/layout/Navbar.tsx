@@ -41,7 +41,7 @@ export function Navbar() {
                   href="/dashboard"
                   className="text-sm text-text-secondary hover:text-text-primary"
                 >
-                  Tournaments
+                  American Tournaments
                 </Link>
                 <Link
                   href="/scoreboards"
@@ -103,7 +103,7 @@ export function Navbar() {
                   className="block px-2 py-1.5 text-sm text-text-secondary hover:text-text-primary"
                   onClick={() => setMenuOpen(false)}
                 >
-                  Tournaments
+                  American Tournaments
                 </Link>
                 <Link
                   href="/scoreboards"

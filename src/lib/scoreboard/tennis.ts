@@ -1,8 +1,8 @@
 /**
- * Tennis scoring engine.
+ * Tennis & Padel scoring engine.
  *
  * Pure functions — takes a ScoreState, returns a new ScoreState.
- * Handles: points, deuce/advantage, tiebreaks, set completion, match completion.
+ * Handles: points, deuce/advantage, golden point (no-ad), tiebreaks, set completion, match completion.
  */
 
 export type PointScore = "0" | "15" | "30" | "40" | "AD";
@@ -30,6 +30,8 @@ export interface Scoreboard {
   player1_name: string;
   player2_name: string;
   best_of: 3 | 5;
+  sport_type: "tennis" | "padel";
+  golden_point: boolean;
   score_state: ScoreState;
   status: "pending" | "in_progress" | "completed";
   winner: 1 | 2 | null;
@@ -68,7 +70,8 @@ export function createInitialState(): ScoreState {
 export function awardPoint(
   state: ScoreState,
   player: 1 | 2,
-  bestOf: 3 | 5
+  bestOf: 3 | 5,
+  goldenPoint: boolean = false
 ): ScoreState {
   // Don't allow scoring after match is over
   if (state.matchWinner) return state;
@@ -83,7 +86,7 @@ export function awardPoint(
   if (state.isTiebreak) {
     next = awardTiebreakPoint(state, player, bestOf);
   } else {
-    next = awardGamePoint(state, player, bestOf);
+    next = awardGamePoint(state, player, bestOf, goldenPoint);
   }
 
   // Keep last 50 undo states
@@ -107,7 +110,8 @@ export function undoPoint(state: ScoreState): ScoreState {
 function awardGamePoint(
   state: ScoreState,
   player: 1 | 2,
-  bestOf: 3 | 5
+  bestOf: 3 | 5,
+  goldenPoint: boolean = false
 ): ScoreState {
   const s = deepClone(state);
   const scorer = player === 1 ? "p1" : "p2";
@@ -118,7 +122,11 @@ function awardGamePoint(
 
   // Both at 40 — deuce logic
   if (scorerPts === "40" && opponentPts === "40") {
-    // Scorer gets advantage
+    // Golden point (no-ad): next point wins immediately
+    if (goldenPoint) {
+      return winGame(s, player, bestOf);
+    }
+    // Standard: scorer gets advantage
     s.currentGame[scorer] = "AD";
     return s;
   }

@@ -60,20 +60,22 @@ src/
 - **Admin** (auth required): Create tournaments, add players with classifications, generate/preview/lock draws, assign courts, record scores
 - **Player/Public** (no auth): View matchups and rankings via `/tournaments/[id]/live` — classifications hidden, navbar hidden
 
-### 2. Tennis Scoreboards
-- **Admin** (auth required): Create matches (player names, best-of-3/5, optional court), score live via tap-to-award-point interface
-- **Public** (no auth): Real-time scoreboard at `/scoreboards/[id]/live` (dark theme), all live matches at `/scoreboards/live`
+### 2. Tennis & Padel Scoreboards
+- **Admin** (auth required): Create matches (sport type, player names, best-of-3/5, golden point toggle, optional court), score live via tap-to-award-point interface
+- **Public** (no auth): Real-time scoreboard at `/scoreboards/[id]/live`, all live matches at `/scoreboards/live`
 
-## Tennis Scoreboard
-- **Scoring format:** Standard tennis — 0/15/30/40/deuce/advantage, tiebreak at 6-6
+## Scoreboard
+- **Sports:** Tennis and Padel — selectable when creating a match
+- **Scoring format:** Standard tennis/padel — 0/15/30/40/deuce/advantage, tiebreak at 6-6
+- **Golden point (no-ad):** At deuce, next point wins the game (default for padel, optional for tennis)
 - **Score state:** Stored as JSONB in `scoreboards` table, updated on each point
-- **Scoring engine:** Pure function `awardPoint(state, player, bestOf)` in `src/lib/scoreboard/tennis.ts`
+- **Scoring engine:** Pure function `awardPoint(state, player, bestOf, goldenPoint)` in `src/lib/scoreboard/tennis.ts`
 - **Undo:** History stack (last 50 states) for undo support
 - **Auto-completion:** Match auto-completes when a player wins the required sets
 - **Server tracking:** Alternates each game; tiebreak follows tennis serve rules
 - **Admin UI:** Two large buttons (Point Player 1 / Point Player 2) + undo + share live link
-- **Public UI:** Dark-themed scoreboard with real-time updates via Supabase Realtime
-- **Live list:** `/scoreboards/live` shows all in-progress matches as cards, tap to open individual live view
+- **Public UI:** Real-time scoreboard with Supabase Realtime
+- **Live list:** `/scoreboards/live` shows all in-progress matches as centered cards, tap to open individual live view
 
 ## TV Mode
 - **Purpose:** Fullscreen + scaled-up UI for TVs/projectors on live pages

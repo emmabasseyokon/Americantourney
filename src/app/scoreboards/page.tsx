@@ -21,6 +21,8 @@ export default function ScoreboardsPage() {
   const [player1Name, setPlayer1Name] = useState("");
   const [player2Name, setPlayer2Name] = useState("");
   const [bestOf, setBestOf] = useState("3");
+  const [sportType, setSportType] = useState<"tennis" | "padel">("tennis");
+  const [goldenPoint, setGoldenPoint] = useState(false);
   const [courtName, setCourtName] = useState("");
   const [error, setError] = useState("");
   const [creating, setCreating] = useState(false);
@@ -75,6 +77,8 @@ export default function ScoreboardsPage() {
         player1_name: cleanP1,
         player2_name: cleanP2,
         best_of: parseInt(bestOf),
+        sport_type: sportType,
+        golden_point: goldenPoint,
         court_name: cleanCourt,
         score_state: createInitialState(),
         status: "pending",
@@ -98,6 +102,8 @@ export default function ScoreboardsPage() {
     setPlayer1Name(sb.player1_name);
     setPlayer2Name(sb.player2_name);
     setBestOf(String(sb.best_of));
+    setSportType(sb.sport_type);
+    setGoldenPoint(sb.golden_point);
     setCourtName(sb.court_name ?? "");
     setError("");
     setShowModal(true);
@@ -125,6 +131,8 @@ export default function ScoreboardsPage() {
         player1_name: cleanP1,
         player2_name: cleanP2,
         best_of: parseInt(bestOf),
+        sport_type: sportType,
+        golden_point: goldenPoint,
         court_name: cleanCourt,
       })
       .eq("id", editingScoreboard.id);
@@ -138,7 +146,7 @@ export default function ScoreboardsPage() {
     setScoreboards((prev) =>
       prev.map((s) =>
         s.id === editingScoreboard.id
-          ? { ...s, player1_name: cleanP1, player2_name: cleanP2, best_of: parseInt(bestOf) as 3 | 5, court_name: cleanCourt }
+          ? { ...s, player1_name: cleanP1, player2_name: cleanP2, best_of: parseInt(bestOf) as 3 | 5, sport_type: sportType, golden_point: goldenPoint, court_name: cleanCourt }
           : s
       )
     );
@@ -151,6 +159,8 @@ export default function ScoreboardsPage() {
     setError("");
     setPlayer1Name("");
     setPlayer2Name("");
+    setSportType("tennis");
+    setGoldenPoint(false);
     setCourtName("");
     setCreating(false);
   }
@@ -209,7 +219,7 @@ export default function ScoreboardsPage() {
     <div className="flex flex-col h-[calc(100vh-3.5rem)] bg-surface">
       {/* Header */}
       <div className="bg-blue-600 px-4 py-4 flex items-center justify-between">
-        <h1 className="text-lg font-bold text-white">Tennis Scoreboards</h1>
+        <h1 className="text-lg font-bold text-white">Scoreboards</h1>
         <button
           onClick={copyShareLink}
           className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium text-white/90 hover:bg-blue-500 transition-colors cursor-pointer"
@@ -252,8 +262,8 @@ export default function ScoreboardsPage() {
                     {getStatusBadge(sb.status)}
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-xs text-text-tertiary">
-                      Best of {sb.best_of}
+                    <span className="text-xs text-text-tertiary capitalize">
+                      {sb.sport_type} — Best of {sb.best_of}
                     </span>
                     {sb.court_name && (
                       <span className="text-xs text-text-tertiary">
@@ -393,6 +403,23 @@ export default function ScoreboardsPage() {
               </div>
 
               <div className="flex items-center justify-between border-b border-border-theme py-3">
+                <span className="text-sm text-text-muted">Sport</span>
+                <select
+                  value={sportType}
+                  onChange={(e) => {
+                    const val = e.target.value as "tennis" | "padel";
+                    setSportType(val);
+                    if (val === "padel") setGoldenPoint(true);
+                    else setGoldenPoint(false);
+                  }}
+                  className="text-sm font-medium text-text-primary bg-transparent outline-none cursor-pointer"
+                >
+                  <option value="tennis">Tennis</option>
+                  <option value="padel">Padel</option>
+                </select>
+              </div>
+
+              <div className="flex items-center justify-between border-b border-border-theme py-3">
                 <span className="text-sm text-text-muted">Format</span>
                 <select
                   value={bestOf}
@@ -402,6 +429,23 @@ export default function ScoreboardsPage() {
                   <option value="3">Best of 3</option>
                   <option value="5">Best of 5</option>
                 </select>
+              </div>
+
+              <div className="flex items-center justify-between border-b border-border-theme py-3">
+                <span className="text-sm text-text-muted">Golden Point</span>
+                <button
+                  type="button"
+                  onClick={() => setGoldenPoint(!goldenPoint)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
+                    goldenPoint ? "bg-blue-600" : "bg-gray-300"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${
+                      goldenPoint ? "translate-x-6" : "translate-x-1"
+                    }`}
+                  />
+                </button>
               </div>
 
               <div className="border-b border-border-theme py-3">

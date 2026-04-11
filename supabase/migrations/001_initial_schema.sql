@@ -180,12 +180,14 @@ create policy "Tournament owners can create match players"
     )
   );
 
--- Tennis Scoreboards
+-- Scoreboards (Tennis & Padel)
 create table scoreboards (
   id uuid primary key default gen_random_uuid(),
   player1_name text not null,
   player2_name text not null,
   best_of int not null default 3 check (best_of in (3, 5)),
+  sport_type text not null default 'tennis' check (sport_type in ('tennis', 'padel')),
+  golden_point boolean not null default false,
   score_state jsonb not null default '{
     "sets": [],
     "currentSet": { "p1": 0, "p2": 0 },

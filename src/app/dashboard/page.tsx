@@ -151,7 +151,7 @@ export default function DashboardPage() {
     <div className="flex flex-col h-[calc(100vh-3.5rem)] bg-surface">
       {/* Header */}
       <div className="bg-blue-600 px-4 py-4">
-        <h1 className="text-lg font-bold text-white">All Tournaments</h1>
+        <h1 className="text-lg font-bold text-white">American Tournaments</h1>
       </div>
 
       {/* Tournament List */}

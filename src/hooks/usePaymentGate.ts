@@ -6,8 +6,8 @@ import { createClient } from "@/lib/supabase/client";
 type ItemType = "tournament" | "scoreboard";
 
 const PRICES = {
-  tournament: { NGN: "₦20,000", USD: "$20" },
-  scoreboard: { NGN: "₦2,000", USD: "$2" },
+  tournament: "₦20,000",
+  scoreboard: "₦2,000",
 } as const;
 
 export function usePaymentGate(itemType: ItemType) {
@@ -35,20 +35,16 @@ export function usePaymentGate(itemType: ItemType) {
     checkFreeSlot();
   }, [itemType]);
 
-  const getButtonLabel = (currency: "NGN" | "USD") => {
+  const getButtonLabel = () => {
     if (isFree === null) return "Loading...";
     if (isFree) {
       return itemType === "tournament" ? "Create Tournament" : "Create Match";
     }
-    const price = PRICES[itemType][currency];
-    return itemType === "tournament"
-      ? `Pay ${price} & Create`
-      : `Pay ${price} & Create`;
+    return `Pay ${PRICES[itemType]} & Create`;
   };
 
   const initializePayment = async (
-    metadata: Record<string, unknown>,
-    currency: "NGN" | "USD"
+    metadata: Record<string, unknown>
   ): Promise<{ free: true; item_id: string } | { free: false; authorization_url: string }> => {
     setLoading(true);
     try {
@@ -57,7 +53,7 @@ export function usePaymentGate(itemType: ItemType) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           item_type: itemType,
-          currency,
+          currency: "NGN",
           item_metadata: metadata,
         }),
       });

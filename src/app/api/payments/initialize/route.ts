@@ -5,8 +5,8 @@ import { createInitialState } from "@/lib/scoreboard/tennis";
 import { NextResponse } from "next/server";
 
 const PRICES = {
-  tournament: { NGN: 2_000_000, USD: 2_000 }, // N20,000 / $20
-  scoreboard: { NGN: 200_000, USD: 200 },      // N2,000 / $2
+  tournament: { NGN: 2_000_000 }, // ₦20,000
+  scoreboard: { NGN: 200_000 },   // ₦2,000
 } as const;
 
 export async function POST(request: Request) {
@@ -24,8 +24,8 @@ export async function POST(request: Request) {
     if (!item_type || !["tournament", "scoreboard"].includes(item_type)) {
       return NextResponse.json({ error: "Invalid item_type" }, { status: 400 });
     }
-    if (!currency || !["NGN", "USD"].includes(currency)) {
-      return NextResponse.json({ error: "Invalid currency" }, { status: 400 });
+    if (!currency || currency !== "NGN") {
+      return NextResponse.json({ error: "Only NGN is supported" }, { status: 400 });
     }
 
     // Check if free slot is available (atomic update)
@@ -64,7 +64,7 @@ export async function POST(request: Request) {
     }
 
     // Paid flow: initialize Paystack transaction
-    const amount = PRICES[item_type as keyof typeof PRICES][currency as "NGN" | "USD"];
+    const amount = PRICES[item_type as keyof typeof PRICES].NGN;
     const reference = `tourney_${item_type}_${crypto.randomUUID()}`;
 
     // Store payment record with item metadata
@@ -91,7 +91,7 @@ export async function POST(request: Request) {
     const paystack = await initializeTransaction({
       email: user.email!,
       amount,
-      currency: currency as "NGN" | "USD",
+      currency: "NGN",
       reference,
       callback_url,
       metadata: { item_type, user_id: user.id },

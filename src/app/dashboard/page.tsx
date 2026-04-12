@@ -6,7 +6,6 @@ import type { Tournament } from "@/types/database";
 import { SkeletonList } from "@/components/ui/Skeleton";
 import { sanitizeString } from "@/lib/utils/security";
 import { usePaymentGate } from "@/hooks/usePaymentGate";
-import { useCurrency } from "@/hooks/useCurrency";
 import { Plus, MoreVertical, Trophy, X, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -16,7 +15,6 @@ export default function DashboardPage() {
   const { supabase, user, loading } = useSupabase();
   const router = useRouter();
   const { isFree, loading: paymentLoading, getButtonLabel, initializePayment } = usePaymentGate("tournament");
-  const { currency, toggleCurrency } = useCurrency();
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [fetching, setFetching] = useState(true);
 
@@ -83,14 +81,11 @@ export default function DashboardPage() {
     }
 
     try {
-      const result = await initializePayment(
-        {
-          name: cleanName,
-          total_rounds: parseInt(totalRounds),
-          max_players: parseInt(maxPlayers),
-        },
-        currency
-      );
+      const result = await initializePayment({
+        name: cleanName,
+        total_rounds: parseInt(totalRounds),
+        max_players: parseInt(maxPlayers),
+      });
 
       if (result.free) {
         router.push(`/tournaments/${result.item_id}`);
@@ -433,26 +428,13 @@ export default function DashboardPage() {
                 <p className="pt-3 text-sm text-red-600">{error}</p>
               )}
 
-              {!isFree && isFree !== null && (
-                <div className="flex items-center justify-between pt-3">
-                  <span className="text-xs text-text-tertiary">Currency</span>
-                  <button
-                    type="button"
-                    onClick={toggleCurrency}
-                    className="text-xs font-medium text-blue-600 hover:text-blue-700 cursor-pointer"
-                  >
-                    {currency === "NGN" ? "🇳🇬 NGN" : "🇺🇸 USD"} — tap to switch
-                  </button>
-                </div>
-              )}
-
               <div className="pt-4">
                 <Button
                   type="submit"
                   className="w-full bg-blue-500 hover:bg-blue-600"
                   disabled={creating || paymentLoading}
                 >
-                  {creating ? "Processing..." : getButtonLabel(currency)}
+                  {creating ? "Processing..." : getButtonLabel()}
                 </Button>
               </div>
             </form>

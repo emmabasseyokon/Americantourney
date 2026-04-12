@@ -7,6 +7,8 @@ create table profiles (
   email text not null,
   display_name text,
   avatar_url text,
+  free_tournament_used boolean not null default false,
+  free_scoreboard_used boolean not null default false,
   created_at timestamptz default now()
 );
 
@@ -217,6 +219,30 @@ create policy "Owners can update their scoreboards"
 
 create policy "Owners can delete their scoreboards"
   on scoreboards for delete using (auth.uid() = created_by);
+
+-- Payments
+create table payments (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references profiles(id) on delete cascade,
+  item_type text not null check (item_type in ('tournament', 'scoreboard')),
+  amount_kobo bigint not null,
+  currency text not null check (currency in ('NGN', 'USD')),
+  paystack_reference text unique not null,
+  paystack_access_code text,
+  status text not null default 'pending' check (status in ('pending', 'success', 'failed')),
+  item_metadata jsonb,
+  created_item_id uuid,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+alter table payments enable row level security;
+
+create policy "Users can view own payments"
+  on payments for select using (auth.uid() = user_id);
+
+create policy "Users can insert own payments"
+  on payments for insert with check (auth.uid() = user_id);
 
 -- Enable Realtime for live public updates
 alter publication supabase_realtime add table tournaments;

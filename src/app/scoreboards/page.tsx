@@ -7,7 +7,6 @@ import { sanitizeString } from "@/lib/utils/security";
 import { createInitialState, formatMatchScore } from "@/lib/scoreboard/tennis";
 import type { Scoreboard } from "@/lib/scoreboard/tennis";
 import { usePaymentGate } from "@/hooks/usePaymentGate";
-import { useCurrency } from "@/hooks/useCurrency";
 import { Plus, MoreVertical, X, Activity, Share2, Copy, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -16,7 +15,6 @@ import { useEffect, useState } from "react";
 export default function ScoreboardsPage() {
   const { supabase, user, loading } = useSupabase();
   const { isFree, loading: paymentLoading, getButtonLabel, initializePayment } = usePaymentGate("scoreboard");
-  const { currency, toggleCurrency } = useCurrency();
   const [scoreboards, setScoreboards] = useState<Scoreboard[]>([]);
   const [fetching, setFetching] = useState(true);
 
@@ -87,17 +85,14 @@ export default function ScoreboardsPage() {
     const cleanCourt = courtName ? sanitizeString(courtName, 50) : null;
 
     try {
-      const result = await initializePayment(
-        {
-          player1_name: cleanP1,
-          player2_name: cleanP2,
-          best_of: parseInt(bestOf),
-          sport_type: sportType,
-          golden_point: goldenPoint,
-          court_name: cleanCourt,
-        },
-        currency
-      );
+      const result = await initializePayment({
+        player1_name: cleanP1,
+        player2_name: cleanP2,
+        best_of: parseInt(bestOf),
+        sport_type: sportType,
+        golden_point: goldenPoint,
+        court_name: cleanCourt,
+      });
 
       if (result.free) {
         // Fetch the created scoreboard and add to list
@@ -497,19 +492,6 @@ export default function ScoreboardsPage() {
                 <p className="pt-3 text-sm text-red-600">{error}</p>
               )}
 
-              {!editingScoreboard && !isFree && isFree !== null && (
-                <div className="flex items-center justify-between pt-3">
-                  <span className="text-xs text-text-tertiary">Currency</span>
-                  <button
-                    type="button"
-                    onClick={toggleCurrency}
-                    className="text-xs font-medium text-blue-600 hover:text-blue-700 cursor-pointer"
-                  >
-                    {currency === "NGN" ? "🇳🇬 NGN" : "🇺🇸 USD"} — tap to switch
-                  </button>
-                </div>
-              )}
-
               <div className="pt-4">
                 <Button
                   type="submit"
@@ -518,7 +500,7 @@ export default function ScoreboardsPage() {
                 >
                   {editingScoreboard
                     ? (creating ? "Saving..." : "SAVE CHANGES")
-                    : (creating ? "Processing..." : getButtonLabel(currency))}
+                    : (creating ? "Processing..." : getButtonLabel())}
                 </Button>
               </div>
             </form>

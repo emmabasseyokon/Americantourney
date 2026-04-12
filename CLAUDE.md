@@ -158,11 +158,9 @@ src/
 - **Hooks:** `usePaymentGate(itemType)` — checks free status, returns button label and `initializePayment()`; `useCurrency()` — auto-detect + toggle
 - **API routes:** `/api/payments/initialize` (POST), `/api/payments/callback` (GET), `/api/payments/webhook` (POST)
 - **Webhook:** Signature verified via HMAC SHA-512, uses service-role Supabase client (bypasses RLS)
-- **Migration:** `supabase/migrations/002_payments.sql`
-
 ## Database
 8 tables in Supabase: `profiles`, `tournaments`, `players`, `rounds`, `matches`, `match_players`, `scoreboards`, `payments`
-Migration files: `supabase/migrations/001_initial_schema.sql`, `supabase/migrations/002_payments.sql`
+Migration file: `supabase/migrations/001_initial_schema.sql`
 
 ## Environment Variables
 ```

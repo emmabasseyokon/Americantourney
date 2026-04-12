@@ -81,7 +81,7 @@ export async function POST(request: Request) {
       });
 
     if (paymentErr) {
-      return NextResponse.json({ error: "Failed to create payment record" }, { status: 500 });
+      return NextResponse.json({ error: "Unable to process payment. Please try again." }, { status: 500 });
     }
 
     // Get callback URL
@@ -109,7 +109,7 @@ export async function POST(request: Request) {
     });
   } catch (err) {
     console.error("Payment initialize error:", err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Unable to process your request. Please try again." }, { status: 500 });
   }
 }
 

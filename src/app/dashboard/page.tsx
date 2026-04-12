@@ -94,7 +94,7 @@ export default function DashboardPage() {
         window.location.href = result.authorization_url;
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Payment failed");
+      setError(err instanceof Error ? err.message : "Could not complete the request. Please try again.");
       setCreating(false);
     }
   }
@@ -122,7 +122,7 @@ export default function DashboardPage() {
       .eq("id", editingTournament.id);
 
     if (dbError) {
-      setEditError(dbError.message);
+      setEditError("Could not save changes. Please try again.");
       setEditSaving(false);
       return;
     }

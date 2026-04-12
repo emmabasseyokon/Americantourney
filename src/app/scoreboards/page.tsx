@@ -111,7 +111,7 @@ export default function ScoreboardsPage() {
         window.location.href = result.authorization_url;
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Payment failed");
+      setError(err instanceof Error ? err.message : "Could not create match. Please try again.");
       setCreating(false);
     }
   }
@@ -157,7 +157,7 @@ export default function ScoreboardsPage() {
       .eq("id", editingScoreboard.id);
 
     if (dbError) {
-      setError(dbError.message);
+      setError("Could not save changes. Please try again.");
       setCreating(false);
       return;
     }

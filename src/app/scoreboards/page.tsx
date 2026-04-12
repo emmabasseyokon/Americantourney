@@ -217,7 +217,7 @@ export default function ScoreboardsPage() {
   }
 
   function copyShareLink() {
-    const url = `${window.location.origin}/scoreboards/live`;
+    const url = `${window.location.origin}/scoreboards/live?host=${user!.id}`;
     navigator.clipboard.writeText(url);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);

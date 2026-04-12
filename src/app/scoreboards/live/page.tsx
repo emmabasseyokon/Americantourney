@@ -7,9 +7,10 @@ import { TvModeButton } from "@/components/ui/TvModeButton";
 import { useTvMode } from "@/hooks/useTvMode";
 import { formatGameScore, formatMatchScore } from "@/lib/scoreboard/tennis";
 import type { Scoreboard, ScoreState } from "@/lib/scoreboard/tennis";
-import { Activity, Trophy } from "lucide-react";
+import { Activity } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 function TennisBall({ className = "h-3 w-3" }: { className?: string }) {
   return (
@@ -22,19 +23,41 @@ function TennisBall({ className = "h-3 w-3" }: { className?: string }) {
 }
 
 export default function ScoreboardsLivePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-surface">
+        <div className="bg-surface-secondary px-4 py-4 border-b border-border-theme">
+          <div className="h-5 w-40 animate-pulse rounded bg-surface-tertiary" />
+        </div>
+        <SkeletonList rows={6} />
+      </div>
+    }>
+      <ScoreboardsLiveContent />
+    </Suspense>
+  );
+}
+
+function ScoreboardsLiveContent() {
   const supabase = useMemo(() => createClient(), []);
+  const searchParams = useSearchParams();
+  const hostId = searchParams.get("host");
   const { isTvMode, controlsVisible, toggleTvMode } = useTvMode();
   const [scoreboards, setScoreboards] = useState<Scoreboard[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchLive() {
-      const { data } = await supabase
+      let query = supabase
         .from("scoreboards")
         .select("*")
         .in("status", ["in_progress", "pending"])
         .order("created_at", { ascending: false });
 
+      if (hostId) {
+        query = query.eq("created_by", hostId);
+      }
+
+      const { data } = await query;
       setScoreboards(data ?? []);
       setLoading(false);
     }

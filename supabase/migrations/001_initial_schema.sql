@@ -226,7 +226,7 @@ create table payments (
   user_id uuid not null references profiles(id) on delete cascade,
   item_type text not null check (item_type in ('tournament', 'scoreboard')),
   amount_kobo bigint not null,
-  currency text not null check (currency in ('NGN', 'USD')),
+  currency text not null default 'NGN' check (currency = 'NGN'),
   paystack_reference text unique not null,
   paystack_access_code text,
   status text not null default 'pending' check (status in ('pending', 'success', 'failed')),

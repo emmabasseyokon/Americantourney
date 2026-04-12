@@ -149,13 +149,13 @@ src/
 
 ## Payment Gating (Paystack)
 - **Model:** Per-item payment — 1 free tournament + 1 free scoreboard per account (lifetime, not restored on deletion), then paid
-- **Prices:** Tournaments: ₦20,000 / $20 — Scoreboards: ₦2,000 / $2
-- **Provider:** Paystack (redirect-based checkout, supports NGN + USD)
+- **Prices:** Tournaments: ₦20,000 — Scoreboards: ₦2,000
+- **Currency:** NGN only (USD can be added when Paystack enables it for the account)
+- **Provider:** Paystack (redirect-based checkout)
 - **Flow:** Client calls `POST /api/payments/initialize` → server checks free slot → if free, creates item directly; if paid, initializes Paystack transaction and returns `authorization_url` → user redirected to Paystack → callback verifies and creates item → webhook as safety net
 - **Free slot claiming:** Atomic `UPDATE profiles SET free_x_used = true WHERE free_x_used = false` prevents double-claims
 - **Idempotent item creation:** `WHERE created_item_id IS NULL` guard prevents callback + webhook race from creating duplicates
-- **Currency auto-detect:** NGN for `Africa/Lagos` timezone, USD otherwise; persisted to localStorage; toggle in create modals
-- **Hooks:** `usePaymentGate(itemType)` — checks free status, returns button label and `initializePayment()`; `useCurrency()` — auto-detect + toggle
+- **Hooks:** `usePaymentGate(itemType)` — checks free status, returns button label and `initializePayment()`
 - **API routes:** `/api/payments/initialize` (POST), `/api/payments/callback` (GET), `/api/payments/webhook` (POST)
 - **Webhook:** Signature verified via HMAC SHA-512, uses service-role Supabase client (bypasses RLS)
 ## Database

@@ -72,7 +72,7 @@ export interface Payment {
   user_id: string;
   item_type: PaymentItemType;
   amount_kobo: number;
-  currency: "NGN" | "USD";
+  currency: "NGN";
   paystack_reference: string;
   paystack_access_code: string | null;
   status: PaymentStatus;

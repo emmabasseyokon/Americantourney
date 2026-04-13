@@ -41,6 +41,10 @@ export async function updateSession(request: NextRequest) {
   supabaseResponse.headers.set("X-Content-Type-Options", "nosniff");
   supabaseResponse.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   supabaseResponse.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  supabaseResponse.headers.set(
+    "Content-Security-Policy",
+    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.paystack.co; frame-src https://checkout.paystack.com; base-uri 'self'; form-action 'self'"
+  );
 
   const {
     data: { user },

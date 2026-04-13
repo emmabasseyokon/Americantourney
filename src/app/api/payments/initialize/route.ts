@@ -28,6 +28,25 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Only NGN is supported" }, { status: 400 });
     }
 
+    // Validate metadata shape — only allow known fields
+    if (!item_metadata || typeof item_metadata !== "object") {
+      return NextResponse.json({ error: "Missing item details" }, { status: 400 });
+    }
+    const safeMetadata = item_type === "tournament"
+      ? {
+          name: String(item_metadata.name || ""),
+          total_rounds: Number(item_metadata.total_rounds) || 5,
+          max_players: Number(item_metadata.max_players) || 32,
+        }
+      : {
+          player1_name: String(item_metadata.player1_name || ""),
+          player2_name: String(item_metadata.player2_name || ""),
+          best_of: Number(item_metadata.best_of) || 3,
+          sport_type: item_metadata.sport_type === "padel" ? "padel" : "tennis",
+          golden_point: !!item_metadata.golden_point,
+          court_name: item_metadata.court_name ? String(item_metadata.court_name) : null,
+        };
+
     // Check if free slot is available (atomic update)
     const freeColumn = item_type === "tournament" ? "free_tournament_used" : "free_scoreboard_used";
 
@@ -59,7 +78,7 @@ export async function POST(request: Request) {
       }
 
       // Create the item directly
-      const itemId = await createItem(supabase, user.id, item_type, item_metadata);
+      const itemId = await createItem(supabase, user.id, item_type, safeMetadata);
       return NextResponse.json({ free: true, item_id: itemId });
     }
 
@@ -77,16 +96,16 @@ export async function POST(request: Request) {
         currency,
         paystack_reference: reference,
         status: "pending",
-        item_metadata,
+        item_metadata: safeMetadata,
       });
 
     if (paymentErr) {
       return NextResponse.json({ error: "Unable to process payment. Please try again." }, { status: 500 });
     }
 
-    // Get callback URL
-    const origin = request.headers.get("origin") || request.headers.get("referer")?.replace(/\/[^/]*$/, "") || "";
-    const callback_url = `${origin}/api/payments/callback`;
+    // Use configured app URL — never trust Origin/Referer headers
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL || ""}`;
+    const callback_url = `${appUrl}/api/payments/callback`;
 
     const paystack = await initializeTransaction({
       email: user.email!,

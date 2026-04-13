@@ -94,8 +94,22 @@ export async function verifyWebhookSignature(
     ["sign"]
   );
   const sig = await crypto.subtle.sign("HMAC", cryptoKey, encoder.encode(body));
-  const hash = Array.from(new Uint8Array(sig))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-  return hash === signature;
+  const hashBytes = new Uint8Array(sig);
+  const sigBytes = hexToBytes(signature);
+
+  // Constant-time comparison to prevent timing attacks
+  if (hashBytes.length !== sigBytes.length) return false;
+  let diff = 0;
+  for (let i = 0; i < hashBytes.length; i++) {
+    diff |= hashBytes[i] ^ sigBytes[i];
+  }
+  return diff === 0;
+}
+
+function hexToBytes(hex: string): Uint8Array {
+  const bytes = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < hex.length; i += 2) {
+    bytes[i / 2] = parseInt(hex.substring(i, i + 2), 16);
+  }
+  return bytes;
 }

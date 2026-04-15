@@ -35,6 +35,7 @@ export default function LiveTournamentPage() {
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
   const [rounds, setRounds] = useState<Round[]>([]);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("players");
   const [loading, setLoading] = useState(true);
 
@@ -64,6 +65,16 @@ export default function LiveTournamentPage() {
       setPlayers(pRes.data ?? []);
       setRounds(rRes.data ?? []);
       setLoading(false);
+
+      // Fetch creator's logo
+      if (tRes.data?.created_by) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("logo_url")
+          .eq("id", tRes.data.created_by)
+          .single();
+        if (profile?.logo_url) setLogoUrl(profile.logo_url);
+      }
     }
 
     fetchCoreData();
@@ -129,7 +140,7 @@ export default function LiveTournamentPage() {
       <TvModeButton isTvMode={isTvMode} controlsVisible={controlsVisible} onToggle={toggleTvMode} />
       {/* Header */}
       <div className="border-b border-border-theme bg-surface px-4 py-3">
-        <div className="mx-auto max-w-4xl">
+        <div className="mx-auto max-w-4xl flex items-center justify-between">
           <div>
             <h1 className="text-lg font-bold text-text-primary">
               {tournament.name}
@@ -142,6 +153,9 @@ export default function LiveTournamentPage() {
               | {tournament.total_rounds} Rounds
             </p>
           </div>
+          {logoUrl && (
+            <img src={logoUrl} alt="Logo" className="h-10 max-w-[120px] object-contain" />
+          )}
         </div>
       </div>
 

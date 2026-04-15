@@ -86,7 +86,7 @@ export default function ScoreboardAdminPage() {
       ? createInitialState()
       : scoreboard.score_state;
 
-    const newState = awardPoint(state, player, scoreboard.best_of, scoreboard.golden_point);
+    const newState = awardPoint(state, player, scoreboard.best_of, scoreboard.golden_point, scoreboard.format || "standard");
     updateScore(newState);
   }
 

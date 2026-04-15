@@ -110,6 +110,7 @@ async function createItem(
       player1_name: p1 || "Player 1",
       player2_name: p2 || "Player 2",
       best_of: Number(metadata.best_of) || 3,
+      format: metadata.format === "junior" ? "junior" : "standard",
       sport_type: metadata.sport_type === "padel" ? "padel" : "tennis",
       golden_point: !!metadata.golden_point,
       court_name: metadata.court_name ? sanitizeString(String(metadata.court_name), 50) : null,

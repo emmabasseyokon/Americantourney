@@ -26,6 +26,7 @@ export default function ScoreboardsPage() {
   const [player1Name, setPlayer1Name] = useState("");
   const [player2Name, setPlayer2Name] = useState("");
   const [bestOf, setBestOf] = useState("3");
+  const [matchFormat, setMatchFormat] = useState<"standard" | "junior">("standard");
   const [sportType, setSportType] = useState<"tennis" | "padel">("tennis");
   const [goldenPoint, setGoldenPoint] = useState(false);
   const [courtName, setCourtName] = useState("");
@@ -89,6 +90,7 @@ export default function ScoreboardsPage() {
         player1_name: cleanP1,
         player2_name: cleanP2,
         best_of: parseInt(bestOf),
+        format: matchFormat,
         sport_type: sportType,
         golden_point: goldenPoint,
         court_name: cleanCourt,
@@ -121,6 +123,7 @@ export default function ScoreboardsPage() {
     setPlayer1Name(sb.player1_name);
     setPlayer2Name(sb.player2_name);
     setBestOf(String(sb.best_of));
+    setMatchFormat(sb.format || "standard");
     setSportType(sb.sport_type);
     setGoldenPoint(sb.golden_point);
     setCourtName(sb.court_name ?? "");
@@ -150,6 +153,7 @@ export default function ScoreboardsPage() {
         player1_name: cleanP1,
         player2_name: cleanP2,
         best_of: parseInt(bestOf),
+        format: matchFormat,
         sport_type: sportType,
         golden_point: goldenPoint,
         court_name: cleanCourt,
@@ -165,7 +169,7 @@ export default function ScoreboardsPage() {
     setScoreboards((prev) =>
       prev.map((s) =>
         s.id === editingScoreboard.id
-          ? { ...s, player1_name: cleanP1, player2_name: cleanP2, best_of: parseInt(bestOf) as 3 | 5, sport_type: sportType, golden_point: goldenPoint, court_name: cleanCourt }
+          ? { ...s, player1_name: cleanP1, player2_name: cleanP2, best_of: parseInt(bestOf) as 3 | 5, format: matchFormat, sport_type: sportType, golden_point: goldenPoint, court_name: cleanCourt }
           : s
       )
     );
@@ -178,6 +182,7 @@ export default function ScoreboardsPage() {
     setError("");
     setPlayer1Name("");
     setPlayer2Name("");
+    setMatchFormat("standard");
     setSportType("tennis");
     setGoldenPoint(false);
     setCourtName("");
@@ -290,7 +295,7 @@ export default function ScoreboardsPage() {
                   </span>
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className="text-xs text-text-tertiary capitalize">
-                      {sb.sport_type} — Best of {sb.best_of}
+                      {sb.sport_type} — {sb.format === "junior" ? "Junior" : `Best of ${sb.best_of}`}
                     </span>
                     {sb.court_name && (
                       <span className="text-xs text-text-tertiary">
@@ -452,11 +457,21 @@ export default function ScoreboardsPage() {
               <div className="flex items-center justify-between border-b border-border-theme py-3">
                 <span className="text-sm text-text-muted">Format</span>
                 <select
-                  value={bestOf}
-                  onChange={(e) => setBestOf(e.target.value)}
+                  value={matchFormat === "junior" ? "junior" : bestOf}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === "junior") {
+                      setMatchFormat("junior");
+                      setBestOf("3");
+                    } else {
+                      setMatchFormat("standard");
+                      setBestOf(val);
+                    }
+                  }}
                   className="text-sm font-medium text-text-primary bg-transparent outline-none cursor-pointer"
                 >
                   <option value="3">Best of 3</option>
+                  <option value="junior">Best of 3 (Junior)</option>
                   <option value="5">Best of 5</option>
                 </select>
               </div>

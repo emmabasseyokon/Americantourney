@@ -43,6 +43,7 @@ function ScoreboardsLiveContent() {
   const hostId = searchParams.get("host");
   const { isTvMode, controlsVisible, toggleTvMode } = useTvMode();
   const [scoreboards, setScoreboards] = useState<Scoreboard[]>([]);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -55,6 +56,14 @@ function ScoreboardsLiveContent() {
 
       if (hostId) {
         query = query.eq("created_by", hostId);
+
+        // Fetch host's logo
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("logo_url")
+          .eq("id", hostId)
+          .single();
+        if (profile?.logo_url) setLogoUrl(profile.logo_url);
       }
 
       const { data } = await query;
@@ -102,7 +111,12 @@ function ScoreboardsLiveContent() {
       <TvModeButton isTvMode={isTvMode} controlsVisible={controlsVisible} onToggle={toggleTvMode} />
       {/* Header */}
       <div className="bg-surface-secondary px-4 py-4 border-b border-border-theme">
-        <h1 className="mx-auto max-w-lg text-lg font-bold text-text-primary">Live Matches</h1>
+        <div className="mx-auto max-w-lg flex items-center justify-between">
+          <h1 className="text-lg font-bold text-text-primary">Live Matches</h1>
+          {logoUrl && (
+            <img src={logoUrl} alt="Logo" className="h-8 max-w-[120px] object-contain" />
+          )}
+        </div>
       </div>
 
       {scoreboards.length === 0 ? (

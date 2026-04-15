@@ -17,6 +17,7 @@ export interface ScoreState {
   currentSet: SetScore;
   currentGame: { p1: PointScore; p2: PointScore };
   isTiebreak: boolean;
+  isSuperTiebreak?: boolean;
   tiebreak: { p1: number; p2: number };
   server: 1 | 2;
   /** Set when the match ends. */
@@ -25,11 +26,14 @@ export interface ScoreState {
   history?: ScoreState[];
 }
 
+export type ScoreboardFormat = "standard" | "junior";
+
 export interface Scoreboard {
   id: string;
   player1_name: string;
   player2_name: string;
   best_of: 3 | 5;
+  format: ScoreboardFormat;
   sport_type: "tennis" | "padel";
   golden_point: boolean;
   score_state: ScoreState;
@@ -71,7 +75,8 @@ export function awardPoint(
   state: ScoreState,
   player: 1 | 2,
   bestOf: 3 | 5,
-  goldenPoint: boolean = false
+  goldenPoint: boolean = false,
+  format: ScoreboardFormat = "standard"
 ): ScoreState {
   // Don't allow scoring after match is over
   if (state.matchWinner) return state;
@@ -83,10 +88,12 @@ export function awardPoint(
 
   let next: ScoreState;
 
-  if (state.isTiebreak) {
-    next = awardTiebreakPoint(state, player, bestOf);
+  if (state.isSuperTiebreak) {
+    next = awardSuperTiebreakPoint(state, player, bestOf);
+  } else if (state.isTiebreak) {
+    next = awardTiebreakPoint(state, player, bestOf, format);
   } else {
-    next = awardGamePoint(state, player, bestOf, goldenPoint);
+    next = awardGamePoint(state, player, bestOf, goldenPoint, format);
   }
 
   // Keep last 50 undo states
@@ -111,7 +118,8 @@ function awardGamePoint(
   state: ScoreState,
   player: 1 | 2,
   bestOf: 3 | 5,
-  goldenPoint: boolean = false
+  goldenPoint: boolean = false,
+  format: ScoreboardFormat = "standard"
 ): ScoreState {
   const s = deepClone(state);
   const scorer = player === 1 ? "p1" : "p2";
@@ -124,7 +132,7 @@ function awardGamePoint(
   if (scorerPts === "40" && opponentPts === "40") {
     // Golden point (no-ad): next point wins immediately
     if (goldenPoint) {
-      return winGame(s, player, bestOf);
+      return winGame(s, player, bestOf, format);
     }
     // Standard: scorer gets advantage
     s.currentGame[scorer] = "AD";
@@ -133,7 +141,7 @@ function awardGamePoint(
 
   // Scorer has advantage — wins the game
   if (scorerPts === "AD") {
-    return winGame(s, player, bestOf);
+    return winGame(s, player, bestOf, format);
   }
 
   // Opponent has advantage — back to deuce
@@ -145,7 +153,7 @@ function awardGamePoint(
 
   // Scorer at 40, opponent not at 40 — wins the game
   if (scorerPts === "40") {
-    return winGame(s, player, bestOf);
+    return winGame(s, player, bestOf, format);
   }
 
   // Normal point progression
@@ -154,6 +162,36 @@ function awardGamePoint(
 }
 
 function awardTiebreakPoint(
+  state: ScoreState,
+  player: 1 | 2,
+  bestOf: 3 | 5,
+  format: ScoreboardFormat = "standard"
+): ScoreState {
+  const s = deepClone(state);
+  const scorer = player === 1 ? "p1" : "p2";
+  const opponent = player === 1 ? "p2" : "p1";
+
+  s.tiebreak[scorer]++;
+
+  const totalPoints = s.tiebreak.p1 + s.tiebreak.p2;
+
+  // Switch server every 2 points (after first point, then every 2)
+  if (totalPoints === 1 || (totalPoints > 1 && (totalPoints - 1) % 2 === 0)) {
+    s.server = s.server === 1 ? 2 : 1;
+  }
+
+  // Check if tiebreak is won: at least 7 points and lead by 2
+  if (s.tiebreak[scorer] >= 7 && s.tiebreak[scorer] - s.tiebreak[opponent] >= 2) {
+    return winGame(s, player, bestOf, format);
+  }
+
+  return s;
+}
+
+/**
+ * Super tiebreak (to 10, win by 2) — used as the final set in junior format.
+ */
+function awardSuperTiebreakPoint(
   state: ScoreState,
   player: 1 | 2,
   bestOf: 3 | 5
@@ -171,9 +209,14 @@ function awardTiebreakPoint(
     s.server = s.server === 1 ? 2 : 1;
   }
 
-  // Check if tiebreak is won: at least 7 points and lead by 2
-  if (s.tiebreak[scorer] >= 7 && s.tiebreak[scorer] - s.tiebreak[opponent] >= 2) {
-    return winGame(s, player, bestOf);
+  // Check if super tiebreak is won: at least 10 points and lead by 2
+  if (s.tiebreak[scorer] >= 10 && s.tiebreak[scorer] - s.tiebreak[opponent] >= 2) {
+    // Super tiebreak counts as winning the final set
+    s.sets.push({ ...s.tiebreak });
+    s.isSuperTiebreak = false;
+    s.tiebreak = { p1: 0, p2: 0 };
+    s.matchWinner = player;
+    return s;
   }
 
   return s;
@@ -182,11 +225,15 @@ function awardTiebreakPoint(
 function winGame(
   state: ScoreState,
   player: 1 | 2,
-  bestOf: 3 | 5
+  bestOf: 3 | 5,
+  format: ScoreboardFormat = "standard"
 ): ScoreState {
   const s = deepClone(state);
   const scorer = player === 1 ? "p1" : "p2";
   const opponent = player === 1 ? "p2" : "p1";
+
+  const gamesForSet = format === "junior" ? 4 : 6;
+  const tiebreakAt = format === "junior" ? 3 : 6;
 
   s.currentSet[scorer]++;
 
@@ -195,18 +242,18 @@ function winGame(
   s.tiebreak = { p1: 0, p2: 0 };
 
   // Check if set is won
-  const setWon = checkSetWon(s.currentSet, scorer, opponent, s.isTiebreak);
+  const setWon = checkSetWon(s.currentSet, scorer, opponent, s.isTiebreak, gamesForSet);
 
   if (s.isTiebreak) {
     s.isTiebreak = false;
   }
 
   if (setWon) {
-    return winSet(s, player, bestOf);
+    return winSet(s, player, bestOf, format);
   }
 
-  // Check if tiebreak should start (6-6)
-  if (s.currentSet.p1 === 6 && s.currentSet.p2 === 6) {
+  // Check if tiebreak should start (6-6 standard, 3-3 junior)
+  if (s.currentSet.p1 === tiebreakAt && s.currentSet.p2 === tiebreakAt) {
     s.isTiebreak = true;
   }
 
@@ -222,13 +269,14 @@ function checkSetWon(
   set: SetScore,
   scorer: "p1" | "p2",
   opponent: "p1" | "p2",
-  wasTiebreak: boolean
+  wasTiebreak: boolean,
+  gamesForSet: number = 6
 ): boolean {
-  // Tiebreak win (7-6)
+  // Tiebreak win (7-6 standard, 4-3 junior)
   if (wasTiebreak) return true;
 
-  // Normal set win: at least 6 games and lead by 2
-  if (set[scorer] >= 6 && set[scorer] - set[opponent] >= 2) return true;
+  // Normal set win: at least gamesForSet and lead by 2
+  if (set[scorer] >= gamesForSet && set[scorer] - set[opponent] >= 2) return true;
 
   return false;
 }
@@ -236,7 +284,8 @@ function checkSetWon(
 function winSet(
   state: ScoreState,
   player: 1 | 2,
-  bestOf: 3 | 5
+  bestOf: 3 | 5,
+  format: ScoreboardFormat = "standard"
 ): ScoreState {
   const s = deepClone(state);
 
@@ -258,6 +307,12 @@ function winSet(
     s.matchWinner = 2;
   }
 
+  // Junior format: if entering final set (1-1), start super tiebreak instead
+  if (!s.matchWinner && format === "junior" && s.sets.length === 2) {
+    s.isSuperTiebreak = true;
+    s.tiebreak = { p1: 0, p2: 0 };
+  }
+
   return s;
 }
 
@@ -273,7 +328,7 @@ function deepClone(state: ScoreState): ScoreState {
  * In tiebreak: shows numeric points. Otherwise: standard tennis points.
  */
 export function formatGameScore(state: ScoreState): { p1: string; p2: string } {
-  if (state.isTiebreak) {
+  if (state.isTiebreak || state.isSuperTiebreak) {
     return { p1: String(state.tiebreak.p1), p2: String(state.tiebreak.p2) };
   }
   return { p1: state.currentGame.p1, p2: state.currentGame.p2 };

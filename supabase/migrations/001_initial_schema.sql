@@ -7,6 +7,7 @@ create table profiles (
   email text not null,
   display_name text,
   avatar_url text,
+  logo_url text,
   free_tournament_used boolean not null default false,
   free_scoreboard_used boolean not null default false,
   created_at timestamptz default now()
@@ -188,6 +189,7 @@ create table scoreboards (
   player1_name text not null,
   player2_name text not null,
   best_of int not null default 3 check (best_of in (3, 5)),
+  format text not null default 'standard' check (format in ('standard', 'junior')),
   sport_type text not null default 'tennis' check (sport_type in ('tennis', 'padel')),
   golden_point boolean not null default false,
   score_state jsonb not null default '{

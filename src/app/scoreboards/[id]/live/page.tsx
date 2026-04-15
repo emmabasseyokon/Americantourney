@@ -29,6 +29,7 @@ export default function ScoreboardLivePage() {
 
   const { isTvMode, controlsVisible, toggleTvMode } = useTvMode();
   const [scoreboard, setScoreboard] = useState<Scoreboard | null>(null);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchScoreboard() {
@@ -38,7 +39,16 @@ export default function ScoreboardLivePage() {
         .eq("id", scoreboardId)
         .single();
 
-      if (data) setScoreboard(data);
+      if (data) {
+        setScoreboard(data);
+        // Fetch creator's logo
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("logo_url")
+          .eq("id", data.created_by)
+          .single();
+        if (profile?.logo_url) setLogoUrl(profile.logo_url);
+      }
     }
 
     fetchScoreboard();
@@ -97,6 +107,13 @@ export default function ScoreboardLivePage() {
       >
         <ArrowLeft className="h-4 w-4" />
       </Link>
+
+      {/* Logo */}
+      {logoUrl && (
+        <div className="mb-4">
+          <img src={logoUrl} alt="Logo" className="h-12 max-w-[160px] object-contain mx-auto" />
+        </div>
+      )}
 
       {/* Status */}
       <div className="mb-4 text-center">
@@ -167,15 +184,20 @@ export default function ScoreboardLivePage() {
               {set.p1}
             </div>
           ))}
-          {!isComplete && (
+          {!isComplete && !state.isSuperTiebreak && (
             <div className="py-4 text-base font-bold text-text-primary">
               {state.currentSet.p1}
+            </div>
+          )}
+          {!isComplete && state.isSuperTiebreak && (
+            <div className="py-4 text-base font-bold text-purple-400">
+              {state.tiebreak.p1}
             </div>
           )}
           {Array.from({ length: Math.max(0, scoreboard.best_of - state.sets.length - (isComplete ? 0 : 1)) }).map((_, i) => (
             <div key={`pad-${i}`} className="py-4 text-base text-text-tertiary">-</div>
           ))}
-          {!isComplete && (
+          {!isComplete && !state.isSuperTiebreak && (
             <div className={`py-4 text-base font-bold ${state.isTiebreak ? "text-blue-400" : "text-green-400"}`}>
               {gameScore.p1}
             </div>
@@ -205,15 +227,20 @@ export default function ScoreboardLivePage() {
               {set.p2}
             </div>
           ))}
-          {!isComplete && (
+          {!isComplete && !state.isSuperTiebreak && (
             <div className="py-4 text-base font-bold text-text-primary">
               {state.currentSet.p2}
+            </div>
+          )}
+          {!isComplete && state.isSuperTiebreak && (
+            <div className="py-4 text-base font-bold text-purple-400">
+              {state.tiebreak.p2}
             </div>
           )}
           {Array.from({ length: Math.max(0, scoreboard.best_of - state.sets.length - (isComplete ? 0 : 1)) }).map((_, i) => (
             <div key={`pad-${i}`} className="py-4 text-base text-text-tertiary">-</div>
           ))}
-          {!isComplete && (
+          {!isComplete && !state.isSuperTiebreak && (
             <div className={`py-4 text-base font-bold ${state.isTiebreak ? "text-blue-400" : "text-green-400"}`}>
               {gameScore.p2}
             </div>
@@ -222,7 +249,12 @@ export default function ScoreboardLivePage() {
       </div>
 
       {/* Tiebreak indicator */}
-      {state.isTiebreak && !isComplete && (
+      {state.isSuperTiebreak && !isComplete && (
+        <div className="mt-3 text-center text-xs font-semibold text-purple-400 uppercase tracking-wide">
+          Super Tiebreak
+        </div>
+      )}
+      {state.isTiebreak && !state.isSuperTiebreak && !isComplete && (
         <div className="mt-3 text-center text-xs font-semibold text-blue-400 uppercase tracking-wide">
           Tiebreak
         </div>
@@ -230,7 +262,7 @@ export default function ScoreboardLivePage() {
 
       {/* Best of info */}
       <p className="mt-4 text-xs text-text-secondary">
-        Best of {scoreboard.best_of} sets
+        {scoreboard.format === "junior" ? "Junior format" : `Best of ${scoreboard.best_of} sets`}
       </p>
     </div>
   );

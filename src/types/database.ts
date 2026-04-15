@@ -13,6 +13,7 @@ export interface Profile {
   email: string;
   display_name: string | null;
   avatar_url: string | null;
+  logo_url: string | null;
   free_tournament_used: boolean;
   free_scoreboard_used: boolean;
   created_at: string;

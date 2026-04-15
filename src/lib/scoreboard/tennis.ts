@@ -233,7 +233,7 @@ function winGame(
   const opponent = player === 1 ? "p2" : "p1";
 
   const gamesForSet = format === "junior" ? 4 : 6;
-  const tiebreakAt = format === "junior" ? 3 : 6;
+  const tiebreakAt = format === "junior" ? 4 : 6;
 
   s.currentSet[scorer]++;
 

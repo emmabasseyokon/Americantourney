@@ -24,6 +24,8 @@ src/
 │   ├── api/payments/            # initialize/, callback/, webhook/ — Paystack payment routes
 │   ├── auth/                    # Login, register, callback
 │   ├── dashboard/               # Admin: tournament list with kebab menu (edit/delete)
+│   │   └── settings/
+│   │       └── page.tsx         # Admin: logo upload/manage (Supabase Storage)
 │   ├── scoreboards/
 │   │   ├── page.tsx             # Admin: scoreboard list with create/delete
 │   │   ├── [id]/
@@ -31,7 +33,7 @@ src/
 │   │   │   └── live/
 │   │   │       └── page.tsx     # PUBLIC: real-time scoreboard (theme-aware, no auth)
 │   │   └── live/
-│   │       └── page.tsx         # PUBLIC: all in-progress matches list
+│   │       └── page.tsx         # PUBLIC: in-progress matches list (filtered by ?host=userId)
 │   ├── tournaments/
 │   │   └── [id]/
 │   │       ├── page.tsx         # Admin: single-page tabbed layout (Players/Matchups/Rankings)
@@ -69,16 +71,21 @@ src/
 
 ## Scoreboard
 - **Sports:** Tennis and Padel — selectable when creating a match
-- **Scoring format:** Standard tennis/padel — 0/15/30/40/deuce/advantage, tiebreak at 6-6
+- **Formats:** Standard and Junior — selectable when creating a match
+  - **Standard:** 6-game sets, tiebreak at 6-6 (to 7, win by 2)
+  - **Junior:** 4-game sets, win by 2 at 3-3 (e.g. 5-3), tiebreak at 4-4 (to 7), super tiebreak to 10 in final set
+- **Scoring:** 0/15/30/40/deuce/advantage
 - **Golden point (no-ad):** At deuce, next point wins the game (default for padel, optional for tennis)
 - **Score state:** Stored as JSONB in `scoreboards` table, updated on each point
-- **Scoring engine:** Pure function `awardPoint(state, player, bestOf, goldenPoint)` in `src/lib/scoreboard/tennis.ts`
+- **Scoring engine:** Pure function `awardPoint(state, player, bestOf, goldenPoint, format)` in `src/lib/scoreboard/tennis.ts`
+- **Super tiebreak:** First to 10 points, win by 2, same serve rotation as regular tiebreak — triggered in junior format final set (1-1)
 - **Undo:** History stack (last 50 states) for undo support
 - **Auto-completion:** Match auto-completes when a player wins the required sets
 - **Server tracking:** Alternates each game; tiebreak follows tennis serve rules
 - **Admin UI:** Two large buttons (Point Player 1 / Point Player 2) + undo + share live link
-- **Public UI:** Real-time scoreboard with Supabase Realtime
-- **Live list:** `/scoreboards/live` shows all in-progress matches as centered cards, tap to open individual live view
+- **Public UI:** Real-time scoreboard with Supabase Realtime, creator's logo displayed above scoreboard
+- **Live list:** `/scoreboards/live?host=userId` shows in-progress matches for a specific account, creator's logo in header
+- **Branding:** Club/event logo uploaded via `/dashboard/settings`, stored in Supabase Storage `logos` bucket, shown on all live pages
 
 ## TV Mode
 - **Purpose:** Fullscreen + scaled-up UI for TVs/projectors on live pages
@@ -143,7 +150,10 @@ src/
 - **Rate limiting:** Client-side on login (5 attempts/min) and register (3 attempts/min) via `checkRateLimit()`
 - **Input sanitization:** All user text inputs (player names, tournament names, display names) sanitized via `sanitizeString()` — strips HTML tags, dangerous characters (`<>"'&`), trims, enforces max length
 - **Open redirect prevention:** `/auth/callback` validates `next` param is a safe relative path (starts with `/`, not `//`)
-- **Security headers** (set in middleware): `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy: camera=(), microphone=(), geolocation=()`
+- **Security headers** (set in middleware): `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy: camera=(), microphone=(), geolocation=()`, `Content-Security-Policy` (allows Supabase Storage images, Paystack checkout frame)
+- **Callback URL protection:** `/api/payments/callback` URL built from `NEXT_PUBLIC_APP_URL` env var, never from request headers
+- **Webhook signature:** Constant-time HMAC SHA-512 comparison to prevent timing attacks
+- **Metadata validation:** Payment API whitelists allowed fields per item type to prevent arbitrary data storage
 - **RLS:** Every table has Row Level Security enabled with owner-based policies for write operations
 - **SQL injection:** Not applicable — Supabase JS client uses parameterized queries; DB `CHECK` constraints validate enums and score ranges
 
@@ -162,10 +172,17 @@ src/
 8 tables in Supabase: `profiles`, `tournaments`, `players`, `rounds`, `matches`, `match_players`, `scoreboards`, `payments`
 Migration file: `supabase/migrations/001_initial_schema.sql`
 
+## Supabase Storage
+- **Bucket:** `logos` (public) — stores club/event logos
+- **Policies:** INSERT/UPDATE/DELETE for `authenticated` role, public reads via public bucket setting
+- **Upload:** Max 2MB, PNG/JPEG/WebP/SVG, stored as `{userId}/logo.{ext}` with upsert
+- **Public URL:** Generated via `getPublicUrl()`, saved to `profiles.logo_url`
+
 ## Environment Variables
 ```
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
+NEXT_PUBLIC_APP_URL=             # Used for Paystack callback URL (e.g. https://americantourney.vercel.app)
 PAYSTACK_SECRET_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
+SUPABASE_SERVICE_ROLE_KEY=       # Server-only, never NEXT_PUBLIC_ prefixed
 ```

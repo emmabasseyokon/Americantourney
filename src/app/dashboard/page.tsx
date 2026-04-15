@@ -6,10 +6,13 @@ import type { Tournament } from "@/types/database";
 import { SkeletonList } from "@/components/ui/Skeleton";
 import { sanitizeString } from "@/lib/utils/security";
 import { usePaymentGate } from "@/hooks/usePaymentGate";
-import { Plus, MoreVertical, Trophy, X, AlertCircle } from "lucide-react";
+import { Plus, MoreVertical, Trophy, X, AlertCircle, Upload } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+
+const MAX_LOGO_SIZE = 2 * 1024 * 1024;
+const ALLOWED_LOGO_TYPES = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"];
 
 export default function DashboardPage() {
   const { supabase, user, loading } = useSupabase();
@@ -26,6 +29,9 @@ export default function DashboardPage() {
   const [name, setName] = useState("");
   const [totalRounds, setTotalRounds] = useState("5");
   const [maxPlayers, setMaxPlayers] = useState("32");
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState("");
   const [creating, setCreating] = useState(false);
 
@@ -67,6 +73,34 @@ export default function DashboardPage() {
     fetchTournaments();
   }, [user, supabase]);
 
+  function handleLogoSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!ALLOWED_LOGO_TYPES.includes(file.type)) {
+      setError("Logo must be PNG, JPEG, WebP, or SVG.");
+      return;
+    }
+    if (file.size > MAX_LOGO_SIZE) {
+      setError("Logo must be under 2MB.");
+      return;
+    }
+    setError("");
+    setLogoFile(file);
+    setLogoPreview(URL.createObjectURL(file));
+  }
+
+  async function uploadLogo(): Promise<string | null> {
+    if (!logoFile || !user) return null;
+    const ext = logoFile.name.split(".").pop() || "png";
+    const filePath = `${user.id}/${Date.now()}.${ext}`;
+    const { error: uploadErr } = await supabase.storage
+      .from("logos")
+      .upload(filePath, logoFile, { upsert: true });
+    if (uploadErr) throw new Error("Failed to upload logo.");
+    const { data: urlData } = supabase.storage.from("logos").getPublicUrl(filePath);
+    return urlData.publicUrl;
+  }
+
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     if (!user) return;
@@ -81,10 +115,16 @@ export default function DashboardPage() {
     }
 
     try {
+      let logoUrl: string | null = null;
+      if (logoFile) {
+        logoUrl = await uploadLogo();
+      }
+
       const result = await initializePayment({
         name: cleanName,
         total_rounds: parseInt(totalRounds),
         max_players: parseInt(maxPlayers),
+        logo_url: logoUrl,
       });
 
       if (result.free) {
@@ -377,6 +417,9 @@ export default function DashboardPage() {
                   setShowModal(false);
                   setError("");
                   setName("");
+                  setLogoFile(null);
+                  setLogoPreview(null);
+                  if (logoInputRef.current) logoInputRef.current.value = "";
                 }}
                 className="text-white/80 hover:text-white"
               >
@@ -422,6 +465,39 @@ export default function DashboardPage() {
                   <option value="4">4 Rounds</option>
                   <option value="5">5 Rounds</option>
                 </select>
+              </div>
+
+              <div className="border-b border-border-theme py-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-text-muted">Logo (optional)</span>
+                  <input
+                    ref={logoInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                    onChange={handleLogoSelect}
+                    className="hidden"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => logoInputRef.current?.click()}
+                    className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700 cursor-pointer"
+                  >
+                    <Upload className="h-3.5 w-3.5" />
+                    {logoPreview ? "Change" : "Upload"}
+                  </button>
+                </div>
+                {logoPreview && (
+                  <div className="mt-2 flex items-center gap-2">
+                    <img src={logoPreview} alt="Logo" className="h-8 max-w-[100px] object-contain rounded" />
+                    <button
+                      type="button"
+                      onClick={() => { setLogoFile(null); setLogoPreview(null); if (logoInputRef.current) logoInputRef.current.value = ""; }}
+                      className="text-xs text-red-500 hover:text-red-600 cursor-pointer"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
               </div>
 
               {error && (

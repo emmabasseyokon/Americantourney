@@ -91,6 +91,7 @@ async function createItem(
         name: name || "Untitled Tournament",
         total_rounds: Number(metadata.total_rounds) || 5,
         max_players: Number(metadata.max_players) || 32,
+        logo_url: metadata.logo_url ? String(metadata.logo_url) : null,
         status: "registration",
         created_by: userId,
       })
@@ -114,6 +115,7 @@ async function createItem(
       sport_type: metadata.sport_type === "padel" ? "padel" : "tennis",
       golden_point: !!metadata.golden_point,
       court_name: metadata.court_name ? sanitizeString(String(metadata.court_name), 50) : null,
+      logo_url: metadata.logo_url ? String(metadata.logo_url) : null,
       score_state: createInitialState(),
       status: "pending",
       created_by: userId,

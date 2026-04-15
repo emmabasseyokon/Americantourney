@@ -35,7 +35,6 @@ export default function LiveTournamentPage() {
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
   const [rounds, setRounds] = useState<Round[]>([]);
-  const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("players");
   const [loading, setLoading] = useState(true);
 
@@ -65,16 +64,6 @@ export default function LiveTournamentPage() {
       setPlayers(pRes.data ?? []);
       setRounds(rRes.data ?? []);
       setLoading(false);
-
-      // Fetch creator's logo
-      if (tRes.data?.created_by) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("logo_url")
-          .eq("id", tRes.data.created_by)
-          .single();
-        if (profile?.logo_url) setLogoUrl(profile.logo_url);
-      }
     }
 
     fetchCoreData();
@@ -153,8 +142,8 @@ export default function LiveTournamentPage() {
               | {tournament.total_rounds} Rounds
             </p>
           </div>
-          {logoUrl && (
-            <img src={logoUrl} alt="Logo" className="h-10 max-w-[120px] object-contain" />
+          {tournament.logo_url && (
+            <img src={tournament.logo_url} alt="Logo" className="h-10 max-w-[120px] object-contain" />
           )}
         </div>
       </div>

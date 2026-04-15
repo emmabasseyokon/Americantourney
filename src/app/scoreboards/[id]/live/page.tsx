@@ -29,7 +29,6 @@ export default function ScoreboardLivePage() {
 
   const { isTvMode, controlsVisible, toggleTvMode } = useTvMode();
   const [scoreboard, setScoreboard] = useState<Scoreboard | null>(null);
-  const [logoUrl, setLogoUrl] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchScoreboard() {
@@ -41,13 +40,6 @@ export default function ScoreboardLivePage() {
 
       if (data) {
         setScoreboard(data);
-        // Fetch creator's logo
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("logo_url")
-          .eq("id", data.created_by)
-          .single();
-        if (profile?.logo_url) setLogoUrl(profile.logo_url);
       }
     }
 
@@ -109,9 +101,9 @@ export default function ScoreboardLivePage() {
       </Link>
 
       {/* Logo */}
-      {logoUrl && (
+      {scoreboard.logo_url && (
         <div className="mb-4">
-          <img src={logoUrl} alt="Logo" className="h-12 max-w-[160px] object-contain mx-auto" />
+          <img src={scoreboard.logo_url} alt="Logo" className="h-12 max-w-[160px] object-contain mx-auto" />
         </div>
       )}
 

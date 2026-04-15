@@ -13,7 +13,6 @@ export interface Profile {
   email: string;
   display_name: string | null;
   avatar_url: string | null;
-  logo_url: string | null;
   free_tournament_used: boolean;
   free_scoreboard_used: boolean;
   created_at: string;
@@ -25,6 +24,7 @@ export interface Tournament {
   total_rounds: 3 | 4 | 5;
   max_players: 8 | 16 | 32 | 64;
   status: TournamentStatus;
+  logo_url: string | null;
   created_by: string;
   created_at: string;
   updated_at: string;

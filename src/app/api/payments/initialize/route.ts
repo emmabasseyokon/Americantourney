@@ -37,6 +37,7 @@ export async function POST(request: Request) {
           name: String(item_metadata.name || ""),
           total_rounds: Number(item_metadata.total_rounds) || 5,
           max_players: Number(item_metadata.max_players) || 32,
+          logo_url: item_metadata.logo_url ? String(item_metadata.logo_url) : null,
         }
       : {
           player1_name: String(item_metadata.player1_name || ""),
@@ -46,6 +47,7 @@ export async function POST(request: Request) {
           sport_type: item_metadata.sport_type === "padel" ? "padel" : "tennis",
           golden_point: !!item_metadata.golden_point,
           court_name: item_metadata.court_name ? String(item_metadata.court_name) : null,
+          logo_url: item_metadata.logo_url ? String(item_metadata.logo_url) : null,
         };
 
     // Check if free slot is available (atomic update)
@@ -147,6 +149,7 @@ async function createItem(
         name: name || "Untitled Tournament",
         total_rounds: Number(metadata.total_rounds) || 5,
         max_players: Number(metadata.max_players) || 32,
+        logo_url: metadata.logo_url ? String(metadata.logo_url) : null,
         status: "registration",
         created_by: userId,
       })
@@ -170,6 +173,7 @@ async function createItem(
       sport_type: metadata.sport_type === "padel" ? "padel" : "tennis",
       golden_point: !!metadata.golden_point,
       court_name: metadata.court_name ? sanitizeString(String(metadata.court_name), 50) : null,
+      logo_url: metadata.logo_url ? String(metadata.logo_url) : null,
       score_state: createInitialState(),
       status: "pending",
       created_by: userId,

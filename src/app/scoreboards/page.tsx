@@ -7,9 +7,12 @@ import { sanitizeString } from "@/lib/utils/security";
 import { createInitialState, formatMatchScore } from "@/lib/scoreboard/tennis";
 import type { Scoreboard } from "@/lib/scoreboard/tennis";
 import { usePaymentGate } from "@/hooks/usePaymentGate";
-import { Plus, MoreVertical, X, Activity, Share2, Copy, AlertCircle } from "lucide-react";
+import { Plus, MoreVertical, X, Activity, Share2, Copy, AlertCircle, Upload } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+
+const MAX_LOGO_SIZE = 2 * 1024 * 1024; // 2MB
+const ALLOWED_LOGO_TYPES = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"];
 
 
 export default function ScoreboardsPage() {
@@ -30,6 +33,9 @@ export default function ScoreboardsPage() {
   const [sportType, setSportType] = useState<"tennis" | "padel">("tennis");
   const [goldenPoint, setGoldenPoint] = useState(false);
   const [courtName, setCourtName] = useState("");
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState("");
   const [creating, setCreating] = useState(false);
 
@@ -69,6 +75,34 @@ export default function ScoreboardsPage() {
     fetchScoreboards();
   }, [user, supabase]);
 
+  function handleLogoSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!ALLOWED_LOGO_TYPES.includes(file.type)) {
+      setError("Logo must be PNG, JPEG, WebP, or SVG.");
+      return;
+    }
+    if (file.size > MAX_LOGO_SIZE) {
+      setError("Logo must be under 2MB.");
+      return;
+    }
+    setError("");
+    setLogoFile(file);
+    setLogoPreview(URL.createObjectURL(file));
+  }
+
+  async function uploadLogo(): Promise<string | null> {
+    if (!logoFile || !user) return null;
+    const ext = logoFile.name.split(".").pop() || "png";
+    const filePath = `${user.id}/${Date.now()}.${ext}`;
+    const { error: uploadErr } = await supabase.storage
+      .from("logos")
+      .upload(filePath, logoFile, { upsert: true });
+    if (uploadErr) throw new Error("Failed to upload logo.");
+    const { data: urlData } = supabase.storage.from("logos").getPublicUrl(filePath);
+    return urlData.publicUrl;
+  }
+
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     if (!user) return;
@@ -86,6 +120,12 @@ export default function ScoreboardsPage() {
     const cleanCourt = courtName ? sanitizeString(courtName, 50) : null;
 
     try {
+      // Upload logo first if selected
+      let logoUrl: string | null = null;
+      if (logoFile) {
+        logoUrl = await uploadLogo();
+      }
+
       const result = await initializePayment({
         player1_name: cleanP1,
         player2_name: cleanP2,
@@ -94,6 +134,7 @@ export default function ScoreboardsPage() {
         sport_type: sportType,
         golden_point: goldenPoint,
         court_name: cleanCourt,
+        logo_url: logoUrl,
       });
 
       if (result.free) {
@@ -127,6 +168,8 @@ export default function ScoreboardsPage() {
     setSportType(sb.sport_type);
     setGoldenPoint(sb.golden_point);
     setCourtName(sb.court_name ?? "");
+    setLogoFile(null);
+    setLogoPreview(sb.logo_url ?? null);
     setError("");
     setShowModal(true);
   }
@@ -147,6 +190,17 @@ export default function ScoreboardsPage() {
 
     const cleanCourt = courtName ? sanitizeString(courtName, 50) : null;
 
+    let logoUrl = editingScoreboard.logo_url;
+    try {
+      if (logoFile) {
+        logoUrl = await uploadLogo() ?? logoUrl;
+      }
+    } catch {
+      setError("Failed to upload logo.");
+      setCreating(false);
+      return;
+    }
+
     const { error: dbError } = await supabase
       .from("scoreboards")
       .update({
@@ -157,6 +211,7 @@ export default function ScoreboardsPage() {
         sport_type: sportType,
         golden_point: goldenPoint,
         court_name: cleanCourt,
+        logo_url: logoPreview === null ? null : logoUrl,
       })
       .eq("id", editingScoreboard.id);
 
@@ -169,7 +224,7 @@ export default function ScoreboardsPage() {
     setScoreboards((prev) =>
       prev.map((s) =>
         s.id === editingScoreboard.id
-          ? { ...s, player1_name: cleanP1, player2_name: cleanP2, best_of: parseInt(bestOf) as 3 | 5, format: matchFormat, sport_type: sportType, golden_point: goldenPoint, court_name: cleanCourt }
+          ? { ...s, player1_name: cleanP1, player2_name: cleanP2, best_of: parseInt(bestOf) as 3 | 5, format: matchFormat, sport_type: sportType, golden_point: goldenPoint, court_name: cleanCourt, logo_url: logoPreview === null ? null : logoUrl }
           : s
       )
     );
@@ -186,7 +241,10 @@ export default function ScoreboardsPage() {
     setSportType("tennis");
     setGoldenPoint(false);
     setCourtName("");
+    setLogoFile(null);
+    setLogoPreview(null);
     setCreating(false);
+    if (logoInputRef.current) logoInputRef.current.value = "";
   }
 
   async function handleDelete() {
@@ -501,6 +559,39 @@ export default function ScoreboardsPage() {
                   onChange={(e) => setCourtName(e.target.value)}
                   className="w-full text-sm text-text-primary bg-transparent outline-none placeholder:text-text-tertiary"
                 />
+              </div>
+
+              <div className="border-b border-border-theme py-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-text-muted">Logo (optional)</span>
+                  <input
+                    ref={logoInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                    onChange={handleLogoSelect}
+                    className="hidden"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => logoInputRef.current?.click()}
+                    className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700 cursor-pointer"
+                  >
+                    <Upload className="h-3.5 w-3.5" />
+                    {logoPreview ? "Change" : "Upload"}
+                  </button>
+                </div>
+                {logoPreview && (
+                  <div className="mt-2 flex items-center gap-2">
+                    <img src={logoPreview} alt="Logo" className="h-8 max-w-[100px] object-contain rounded" />
+                    <button
+                      type="button"
+                      onClick={() => { setLogoFile(null); setLogoPreview(null); if (logoInputRef.current) logoInputRef.current.value = ""; }}
+                      className="text-xs text-red-500 hover:text-red-600 cursor-pointer"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
               </div>
 
               {error && (

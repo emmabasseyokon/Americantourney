@@ -40,6 +40,7 @@ export interface Scoreboard {
   status: "pending" | "in_progress" | "completed";
   winner: 1 | 2 | null;
   court_name: string | null;
+  logo_url: string | null;
   created_by: string;
   created_at: string;
   updated_at: string;

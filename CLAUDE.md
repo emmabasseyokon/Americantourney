@@ -24,8 +24,6 @@ src/
 │   ├── api/payments/            # initialize/, callback/, webhook/ — Paystack payment routes
 │   ├── auth/                    # Login, register, callback
 │   ├── dashboard/               # Admin: tournament list with kebab menu (edit/delete)
-│   │   └── settings/
-│   │       └── page.tsx         # Admin: logo upload/manage (Supabase Storage)
 │   ├── scoreboards/
 │   │   ├── page.tsx             # Admin: scoreboard list with create/delete
 │   │   ├── [id]/
@@ -83,9 +81,9 @@ src/
 - **Auto-completion:** Match auto-completes when a player wins the required sets
 - **Server tracking:** Alternates each game; tiebreak follows tennis serve rules
 - **Admin UI:** Two large buttons (Point Player 1 / Point Player 2) + undo + share live link
-- **Public UI:** Real-time scoreboard with Supabase Realtime, creator's logo displayed above scoreboard
-- **Live list:** `/scoreboards/live?host=userId` shows in-progress matches for a specific account, creator's logo in header
-- **Branding:** Club/event logo uploaded via `/dashboard/settings`, stored in Supabase Storage `logos` bucket, shown on all live pages
+- **Public UI:** Real-time scoreboard with Supabase Realtime, per-item logo displayed above scoreboard
+- **Live list:** `/scoreboards/live?host=userId` shows in-progress matches for a specific account
+- **Branding:** Optional logo upload per tournament/scoreboard at creation time, stored in Supabase Storage `logos` bucket, shown on individual live pages
 
 ## TV Mode
 - **Purpose:** Fullscreen + scaled-up UI for TVs/projectors on live pages
@@ -173,10 +171,10 @@ src/
 Migration file: `supabase/migrations/001_initial_schema.sql`
 
 ## Supabase Storage
-- **Bucket:** `logos` (public) — stores club/event logos
+- **Bucket:** `logos` (public) — stores tournament/scoreboard logos
 - **Policies:** INSERT/UPDATE/DELETE for `authenticated` role, public reads via public bucket setting
-- **Upload:** Max 2MB, PNG/JPEG/WebP/SVG, stored as `{userId}/logo.{ext}` with upsert
-- **Public URL:** Generated via `getPublicUrl()`, saved to `profiles.logo_url`
+- **Upload:** Max 2MB, PNG/JPEG/WebP/SVG, stored as `{userId}/{timestamp}.{ext}`
+- **Public URL:** Generated via `getPublicUrl()`, saved to `tournaments.logo_url` or `scoreboards.logo_url`
 
 ## Environment Variables
 ```

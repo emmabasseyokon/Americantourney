@@ -7,7 +7,6 @@ create table profiles (
   email text not null,
   display_name text,
   avatar_url text,
-  logo_url text,
   free_tournament_used boolean not null default false,
   free_scoreboard_used boolean not null default false,
   created_at timestamptz default now()
@@ -46,6 +45,7 @@ create table tournaments (
   total_rounds int not null check (total_rounds in (3, 4, 5)),
   max_players int not null check (max_players in (8, 16, 32, 64)),
   status text not null default 'draft' check (status in ('draft', 'registration', 'in_progress', 'completed')),
+  logo_url text,
   created_by uuid not null references profiles(id) on delete cascade,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
@@ -203,6 +203,7 @@ create table scoreboards (
   status text not null default 'pending' check (status in ('pending', 'in_progress', 'completed')),
   winner int check (winner in (1, 2)),
   court_name text,
+  logo_url text,
   created_by uuid not null references profiles(id) on delete cascade,
   created_at timestamptz default now(),
   updated_at timestamptz default now()

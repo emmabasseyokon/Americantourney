@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/Button";
 import { useSupabase } from "@/components/providers/SupabaseProvider";
 import { useTheme } from "@/components/providers/ThemeProvider";
-import { Trophy, Menu, X, Sun, Moon, Settings } from "lucide-react";
+import { Trophy, Menu, X, Sun, Moon } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
@@ -48,13 +48,6 @@ export function Navbar() {
                   className="text-sm text-text-secondary hover:text-text-primary"
                 >
                   Scoreboards
-                </Link>
-                <Link
-                  href="/dashboard/settings"
-                  className="p-2 rounded-lg text-text-secondary hover:bg-surface-secondary transition-colors"
-                  title="Settings"
-                >
-                  <Settings className="h-4 w-4" />
                 </Link>
                 <button
                   onClick={toggleTheme}
@@ -118,13 +111,6 @@ export function Navbar() {
                   onClick={() => setMenuOpen(false)}
                 >
                   Scoreboards
-                </Link>
-                <Link
-                  href="/dashboard/settings"
-                  className="block px-2 py-1.5 text-sm text-text-secondary hover:text-text-primary"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  Settings
                 </Link>
                 <button
                   onClick={handleLogout}

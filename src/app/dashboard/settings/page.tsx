@@ -6,7 +6,7 @@ import { Upload, Trash2, ArrowLeft, Image as ImageIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState, useRef } from "react";
 
-const MAX_FILE_SIZE = 500 * 1024; // 500KB
+const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
 const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"];
 
 export default function SettingsPage() {
@@ -50,7 +50,7 @@ export default function SettingsPage() {
     }
 
     if (file.size > MAX_FILE_SIZE) {
-      setError("Image must be under 500KB.");
+      setError("Image must be under 2MB.");
       return;
     }
 
@@ -59,16 +59,27 @@ export default function SettingsPage() {
     const ext = file.name.split(".").pop() || "png";
     const filePath = `${user.id}/logo.${ext}`;
 
+    console.log("[Logo Upload] Starting upload", {
+      fileName: file.name,
+      fileType: file.type,
+      fileSize: `${(file.size / 1024).toFixed(1)}KB`,
+      filePath,
+      userId: user.id,
+    });
+
     // Upload to Supabase Storage
-    const { error: uploadErr } = await supabase.storage
+    const { data: uploadData, error: uploadErr } = await supabase.storage
       .from("logos")
       .upload(filePath, file, { upsert: true });
 
     if (uploadErr) {
-      setError("Failed to upload logo. Please try again.");
+      console.error("[Logo Upload] Storage upload failed:", uploadErr);
+      setError(`Upload failed: ${uploadErr.message}`);
       setUploading(false);
       return;
     }
+
+    console.log("[Logo Upload] Storage upload succeeded:", uploadData);
 
     // Get public URL
     const { data: urlData } = supabase.storage
@@ -76,18 +87,24 @@ export default function SettingsPage() {
       .getPublicUrl(filePath);
 
     const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+    console.log("[Logo Upload] Public URL:", publicUrl);
 
     // Save to profile
-    const { error: dbErr } = await supabase
+    const { data: profileData, error: dbErr } = await supabase
       .from("profiles")
       .update({ logo_url: publicUrl })
-      .eq("id", user.id);
+      .eq("id", user.id)
+      .select("id, logo_url")
+      .single();
 
     if (dbErr) {
-      setError("Failed to save logo. Please try again.");
+      console.error("[Logo Upload] Profile update failed:", dbErr);
+      setError(`Failed to save logo: ${dbErr.message}`);
       setUploading(false);
       return;
     }
+
+    console.log("[Logo Upload] Profile updated:", profileData);
 
     setLogoUrl(publicUrl);
     setSuccess("Logo uploaded successfully.");
@@ -161,7 +178,7 @@ export default function SettingsPage() {
             <h2 className="text-sm font-bold text-text-primary mb-1">Club / Event Logo</h2>
             <p className="text-xs text-text-muted mb-4">
               Your logo appears on all live scoreboard and tournament pages.
-              Max 500KB, PNG/JPEG/WebP/SVG.
+              Max 2MB, PNG/JPEG/WebP/SVG.
             </p>
 
             {/* Preview */}

@@ -102,7 +102,7 @@ export default function ScoreboardLivePage() {
 
       {/* Back button */}
       <Link
-        href="/scoreboards/live"
+        href={scoreboard.created_by ? `/scoreboards/live?host=${scoreboard.created_by}` : "/scoreboards/live"}
         className="fixed top-4 left-4 z-50 flex h-9 w-9 items-center justify-center rounded-full bg-surface-secondary border border-border-theme text-text-secondary hover:bg-surface-tertiary transition-colors shadow-lg"
       >
         <ArrowLeft className="h-4 w-4" />
@@ -262,7 +262,7 @@ export default function ScoreboardLivePage() {
 
       {/* Best of info */}
       <p className="mt-4 text-xs text-text-secondary">
-        {scoreboard.format === "junior" ? "Junior format" : `Best of ${scoreboard.best_of} sets`}
+        Best of {scoreboard.best_of} sets
       </p>
     </div>
   );

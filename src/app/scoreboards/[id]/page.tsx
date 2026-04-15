@@ -10,7 +10,7 @@ import {
   createInitialState,
 } from "@/lib/scoreboard/tennis";
 import type { Scoreboard, ScoreState } from "@/lib/scoreboard/tennis";
-import { Undo2, Share2, Trophy } from "lucide-react";
+import { Undo2, Share2, Copy, Trophy } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
@@ -104,7 +104,6 @@ export default function ScoreboardAdminPage() {
       setShowShareToast(true);
       setTimeout(() => setShowShareToast(false), 2000);
     } catch {
-      // Fallback: try share API
       if (navigator.share) {
         navigator.share({ title: "Live Scoreboard", url });
       }
@@ -140,20 +139,20 @@ export default function ScoreboardAdminPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={handleShare}
-            className="flex items-center gap-1 rounded-lg bg-blue-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-400 transition-colors cursor-pointer"
+            className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium text-white/90 hover:bg-blue-500 transition-colors cursor-pointer"
           >
-            <Share2 className="h-3.5 w-3.5" />
-            Share Live
+            {showShareToast ? (
+              <>
+                <Copy className="h-3.5 w-3.5" /> Copied
+              </>
+            ) : (
+              <>
+                <Share2 className="h-3.5 w-3.5" /> Share
+              </>
+            )}
           </button>
         </div>
       </div>
-
-      {/* Share toast */}
-      {showShareToast && (
-        <div className="mx-4 mt-2 rounded-lg bg-green-50 border border-green-200 p-2 text-center text-xs text-green-700">
-          Live link copied to clipboard!
-        </div>
-      )}
 
       {/* Winner banner */}
       {isComplete && (

@@ -170,7 +170,7 @@ export default function DashboardPage() {
     setTournaments((prev) =>
       prev.map((t) =>
         t.id === editingTournament.id
-          ? { ...t, name: cleanName, total_rounds: parseInt(editRounds) as 3 | 4 | 5, max_players: parseInt(editPlayers) as 8 | 16 | 32 | 64 }
+          ? { ...t, name: cleanName, total_rounds: parseInt(editRounds) as 2 | 3 | 4 | 5, max_players: parseInt(editPlayers) as 8 | 16 | 32 }
           : t
       )
     );
@@ -343,8 +343,7 @@ export default function DashboardPage() {
                       <option value="8">8 Players</option>
                       <option value="16">16 Players</option>
                       <option value="32">32 Players</option>
-                      <option value="64">64 Players</option>
-                    </select>
+                        </select>
                   </div>
                   <div className="flex items-center justify-between border-b border-border-theme py-3">
                     <span className="text-sm text-text-muted">No of rounds</span>
@@ -354,7 +353,8 @@ export default function DashboardPage() {
                       disabled={locked}
                       className={`text-sm font-medium bg-transparent outline-none ${locked ? "text-text-tertiary" : "text-text-primary cursor-pointer"}`}
                     >
-                      <option value="3">3 Rounds</option>
+                      <option value="2">2 Rounds</option>
+                  <option value="3">3 Rounds</option>
                       <option value="4">4 Rounds</option>
                       <option value="5">5 Rounds</option>
                     </select>
@@ -450,7 +450,6 @@ export default function DashboardPage() {
                   <option value="8">8 Players</option>
                   <option value="16">16 Players</option>
                   <option value="32">32 Players</option>
-                  <option value="64">64 Players</option>
                 </select>
               </div>
 
@@ -461,6 +460,7 @@ export default function DashboardPage() {
                   onChange={(e) => setTotalRounds(e.target.value)}
                   className="text-sm font-medium text-text-primary bg-transparent outline-none cursor-pointer"
                 >
+                  <option value="2">2 Rounds</option>
                   <option value="3">3 Rounds</option>
                   <option value="4">4 Rounds</option>
                   <option value="5">5 Rounds</option>

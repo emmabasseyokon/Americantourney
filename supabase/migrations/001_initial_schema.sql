@@ -42,8 +42,8 @@ create trigger on_auth_user_created
 create table tournaments (
   id uuid primary key default gen_random_uuid(),
   name text not null,
-  total_rounds int not null check (total_rounds in (3, 4, 5)),
-  max_players int not null check (max_players in (8, 16, 32, 64)),
+  total_rounds int not null check (total_rounds in (2, 3, 4, 5)),
+  max_players int not null check (max_players in (8, 16, 32)),
   status text not null default 'draft' check (status in ('draft', 'registration', 'in_progress', 'completed')),
   logo_url text,
   created_by uuid not null references profiles(id) on delete cascade,

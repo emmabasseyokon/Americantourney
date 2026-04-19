@@ -21,8 +21,8 @@ export interface Profile {
 export interface Tournament {
   id: string;
   name: string;
-  total_rounds: 3 | 4 | 5;
-  max_players: 8 | 16 | 32 | 64;
+  total_rounds: 2 | 3 | 4 | 5;
+  max_players: 8 | 16 | 32;
   status: TournamentStatus;
   logo_url: string | null;
   created_by: string;

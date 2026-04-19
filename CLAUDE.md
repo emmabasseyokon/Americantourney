@@ -116,7 +116,7 @@ src/
 - **No repeat pairings** across rounds (NEVER relaxed)
 - **Progressive relaxation order:** all rules → allow same-class → allow close-class
 - **Relaxation warning:** orange banner in preview listing affected rounds and which rules were relaxed
-- **Tournament options:** 3/4/5 rounds, 8/16/32/64 players
+- **Tournament options:** 2/3/4/5 rounds, 8/16/32 players
 - **Leaderboard:** Individual points per round + total with position ordinal (e.g. "4 (1st)")
 
 ## Americano Match Status Flow

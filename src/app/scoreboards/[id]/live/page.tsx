@@ -81,6 +81,12 @@ export default function ScoreboardLivePage() {
       : state.matchWinner === 2
         ? scoreboard.player2_name
         : null;
+  const retiredName =
+    state.retiredPlayer === 1
+      ? scoreboard.player1_name
+      : state.retiredPlayer === 2
+        ? scoreboard.player2_name
+        : null;
 
   const totalSetCols = Math.max(
     state.sets.length + (isComplete ? 0 : 1),
@@ -134,6 +140,9 @@ export default function ScoreboardLivePage() {
         <div className="mb-6 text-center">
           <Trophy className="h-10 w-10 text-amber-400 mx-auto mb-2" />
           <p className="text-xl font-bold text-text-primary">{winnerName} wins!</p>
+          {retiredName && (
+            <p className="text-xs text-text-muted mt-1">{retiredName} retired</p>
+          )}
         </div>
       )}
 
@@ -169,6 +178,9 @@ export default function ScoreboardLivePage() {
             </span>
             {state.matchWinner === 1 && (
               <Trophy className="h-3.5 w-3.5 text-amber-400 flex-shrink-0" />
+            )}
+            {state.retiredPlayer === 1 && (
+              <span className="text-xs font-semibold text-amber-600 flex-shrink-0">ret.</span>
             )}
           </div>
           {state.sets.map((set, i) => (
@@ -212,6 +224,9 @@ export default function ScoreboardLivePage() {
             </span>
             {state.matchWinner === 2 && (
               <Trophy className="h-3.5 w-3.5 text-amber-400 flex-shrink-0" />
+            )}
+            {state.retiredPlayer === 2 && (
+              <span className="text-xs font-semibold text-amber-600 flex-shrink-0">ret.</span>
             )}
           </div>
           {state.sets.map((set, i) => (

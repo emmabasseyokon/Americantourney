@@ -22,6 +22,8 @@ export interface ScoreState {
   server: 1 | 2;
   /** Set when the match ends. */
   matchWinner?: 1 | 2;
+  /** Set when a player retires — the opponent is awarded the win. */
+  retiredPlayer?: 1 | 2;
   /** History of states for undo. */
   history?: ScoreState[];
 }
@@ -111,6 +113,19 @@ export function undoPoint(state: ScoreState): ScoreState {
   const prev = history.pop()!;
   prev.history = history;
   return prev;
+}
+
+/**
+ * Retire a player. The opponent is awarded the match at the current score.
+ * Retirement is final — undo is not supported after this.
+ */
+export function retirePlayer(state: ScoreState, player: 1 | 2): ScoreState {
+  if (state.matchWinner) return state;
+  const { history: _h, ...rest } = state;
+  const next: ScoreState = JSON.parse(JSON.stringify(rest));
+  next.retiredPlayer = player;
+  next.matchWinner = player === 1 ? 2 : 1;
+  return next;
 }
 
 // ── Internal helpers ──────────────────────────────────────────

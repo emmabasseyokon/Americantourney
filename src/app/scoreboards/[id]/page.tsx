@@ -6,11 +6,12 @@ import { SkeletonList } from "@/components/ui/Skeleton";
 import {
   awardPoint,
   undoPoint,
+  retirePlayer,
   formatGameScore,
   createInitialState,
 } from "@/lib/scoreboard/tennis";
 import type { Scoreboard, ScoreState } from "@/lib/scoreboard/tennis";
-import { Undo2, Share2, Copy, Trophy } from "lucide-react";
+import { Undo2, Share2, Copy, Trophy, AlertTriangle } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
@@ -33,6 +34,7 @@ export default function ScoreboardAdminPage() {
   const [scoreboard, setScoreboard] = useState<Scoreboard | null>(null);
   const [saving, setSaving] = useState(false);
   const [showShareToast, setShowShareToast] = useState(false);
+  const [retireConfirm, setRetireConfirm] = useState<1 | 2 | null>(null);
 
   const fetchScoreboard = useCallback(async () => {
     const { data } = await supabase
@@ -93,7 +95,16 @@ export default function ScoreboardAdminPage() {
   function handleUndo() {
     if (!scoreboard) return;
     const newState = undoPoint(scoreboard.score_state);
-    // If undo brings us back, also unset winner/completed if needed
+    updateScore(newState);
+  }
+
+  function handleRetire(player: 1 | 2) {
+    if (!scoreboard) return;
+    const state = scoreboard.status === "pending"
+      ? createInitialState()
+      : scoreboard.score_state;
+    const newState = retirePlayer(state, player);
+    setRetireConfirm(null);
     updateScore(newState);
   }
 
@@ -121,6 +132,12 @@ export default function ScoreboardAdminPage() {
     state.matchWinner === 1
       ? scoreboard.player1_name
       : state.matchWinner === 2
+        ? scoreboard.player2_name
+        : null;
+  const retiredName =
+    state.retiredPlayer === 1
+      ? scoreboard.player1_name
+      : state.retiredPlayer === 2
         ? scoreboard.player2_name
         : null;
 
@@ -159,9 +176,13 @@ export default function ScoreboardAdminPage() {
         <div className="mx-4 mt-3 rounded-lg bg-amber-50 border border-amber-300 p-4 text-center">
           <Trophy className="h-8 w-8 text-amber-500 mx-auto mb-1" />
           <p className="text-lg font-bold text-text-primary">{winnerName} wins!</p>
-          <p className="text-xs text-text-muted mt-1">
-            {state.sets.map((s) => `${s.p1}-${s.p2}`).join(", ")}
-          </p>
+          {retiredName ? (
+            <p className="text-xs text-text-muted mt-1">{retiredName} retired</p>
+          ) : (
+            <p className="text-xs text-text-muted mt-1">
+              {state.sets.map((s) => `${s.p1}-${s.p2}`).join(", ")}
+            </p>
+          )}
         </div>
       )}
 
@@ -299,6 +320,53 @@ export default function ScoreboardAdminPage() {
             <Undo2 className="h-4 w-4" />
             Undo last point
           </button>
+
+          {/* Retirement */}
+          <div className="pt-2 border-t border-border-theme">
+            {retireConfirm === null ? (
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => setRetireConfirm(1)}
+                  disabled={saving}
+                  className="rounded-xl border border-amber-300 bg-amber-50 py-2.5 text-xs font-semibold text-amber-800 hover:bg-amber-100 transition-colors disabled:opacity-50 cursor-pointer"
+                >
+                  {scoreboard.player1_name} retires
+                </button>
+                <button
+                  onClick={() => setRetireConfirm(2)}
+                  disabled={saving}
+                  className="rounded-xl border border-amber-300 bg-amber-50 py-2.5 text-xs font-semibold text-amber-800 hover:bg-amber-100 transition-colors disabled:opacity-50 cursor-pointer"
+                >
+                  {scoreboard.player2_name} retires
+                </button>
+              </div>
+            ) : (
+              <div className="rounded-xl border border-amber-300 bg-amber-50 p-3">
+                <div className="flex items-center gap-2 mb-2.5">
+                  <AlertTriangle className="h-4 w-4 text-amber-600 flex-shrink-0" />
+                  <p className="text-xs font-semibold text-amber-800">
+                    Confirm:{" "}
+                    {retireConfirm === 1 ? scoreboard.player1_name : scoreboard.player2_name} retires?
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => handleRetire(retireConfirm)}
+                    disabled={saving}
+                    className="rounded-lg bg-amber-600 py-2 text-xs font-bold text-white hover:bg-amber-700 transition-colors disabled:opacity-50 cursor-pointer"
+                  >
+                    Yes, retire
+                  </button>
+                  <button
+                    onClick={() => setRetireConfirm(null)}
+                    className="rounded-lg border border-border-theme bg-surface py-2 text-xs font-medium text-text-secondary hover:bg-surface-secondary transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
 

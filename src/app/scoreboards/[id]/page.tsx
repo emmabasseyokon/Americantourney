@@ -140,6 +140,10 @@ export default function ScoreboardAdminPage() {
       : state.retiredPlayer === 2
         ? scoreboard.player2_name
         : null;
+  const isRetirement = !!state.retiredPlayer;
+  // Show current set column when in-progress, OR when retired mid-set (games played but set not archived)
+  const showCurrentSet = !isComplete || (isRetirement && (state.currentSet.p1 + state.currentSet.p2) > 0);
+  const totalSetCols = Math.max(state.sets.length + (showCurrentSet ? 1 : 0), scoreboard.best_of);
 
   return (
     <div className="flex flex-col h-[calc(100vh-3.5rem)] bg-surface-secondary">
@@ -191,12 +195,12 @@ export default function ScoreboardAdminPage() {
         {/* Score table header */}
         <div className="grid grid-cols-[1fr_repeat(var(--sets),2.5rem)_3rem] bg-surface-secondary border-b border-border-theme text-center text-xs font-bold text-text-tertiary uppercase tracking-wide"
           style={{
-            "--sets": Math.max(state.sets.length + (isComplete ? 0 : 1), scoreboard.best_of),
-            gridTemplateColumns: `1fr repeat(${Math.max(state.sets.length + (isComplete ? 0 : 1), scoreboard.best_of)}, 2.5rem) 3rem`,
+            "--sets": totalSetCols,
+            gridTemplateColumns: `1fr repeat(${totalSetCols}, 2.5rem) 3rem`,
           } as React.CSSProperties}
         >
           <div className="px-4 py-2 text-left">Player</div>
-          {Array.from({ length: Math.max(state.sets.length + (isComplete ? 0 : 1), scoreboard.best_of) }).map((_, i) => (
+          {Array.from({ length: totalSetCols }).map((_, i) => (
             <div key={i} className="py-2">S{i + 1}</div>
           ))}
           {!isComplete && <div className="py-2">Pts</div>}
@@ -207,7 +211,7 @@ export default function ScoreboardAdminPage() {
         <div
           className="grid border-b border-border-light text-center items-center"
           style={{
-            gridTemplateColumns: `1fr repeat(${Math.max(state.sets.length + (isComplete ? 0 : 1), scoreboard.best_of)}, 2.5rem) 3rem`,
+            gridTemplateColumns: `1fr repeat(${totalSetCols}, 2.5rem) 3rem`,
           }}
         >
           <div className="px-4 py-3 text-left flex items-center gap-2">
@@ -226,13 +230,13 @@ export default function ScoreboardAdminPage() {
               {set.p1}
             </div>
           ))}
-          {!isComplete && (
+          {showCurrentSet && (
             <div className="py-3 text-sm font-bold text-text-primary">
               {state.currentSet.p1}
             </div>
           )}
           {/* Pad empty set columns */}
-          {Array.from({ length: Math.max(0, scoreboard.best_of - state.sets.length - (isComplete ? 0 : 1)) }).map((_, i) => (
+          {Array.from({ length: Math.max(0, scoreboard.best_of - state.sets.length - (showCurrentSet ? 1 : 0)) }).map((_, i) => (
             <div key={`pad-${i}`} className="py-3 text-sm text-text-tertiary">-</div>
           ))}
           {!isComplete && (
@@ -247,7 +251,7 @@ export default function ScoreboardAdminPage() {
         <div
           className="grid text-center items-center"
           style={{
-            gridTemplateColumns: `1fr repeat(${Math.max(state.sets.length + (isComplete ? 0 : 1), scoreboard.best_of)}, 2.5rem) 3rem`,
+            gridTemplateColumns: `1fr repeat(${totalSetCols}, 2.5rem) 3rem`,
           }}
         >
           <div className="px-4 py-3 text-left flex items-center gap-2">
@@ -266,12 +270,12 @@ export default function ScoreboardAdminPage() {
               {set.p2}
             </div>
           ))}
-          {!isComplete && (
+          {showCurrentSet && (
             <div className="py-3 text-sm font-bold text-text-primary">
               {state.currentSet.p2}
             </div>
           )}
-          {Array.from({ length: Math.max(0, scoreboard.best_of - state.sets.length - (isComplete ? 0 : 1)) }).map((_, i) => (
+          {Array.from({ length: Math.max(0, scoreboard.best_of - state.sets.length - (showCurrentSet ? 1 : 0)) }).map((_, i) => (
             <div key={`pad-${i}`} className="py-3 text-sm text-text-tertiary">-</div>
           ))}
           {!isComplete && (

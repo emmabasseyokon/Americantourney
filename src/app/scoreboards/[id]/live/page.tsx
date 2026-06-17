@@ -87,9 +87,11 @@ export default function ScoreboardLivePage() {
       : state.retiredPlayer === 2
         ? scoreboard.player2_name
         : null;
+  const isRetirement = !!state.retiredPlayer;
+  const showCurrentSet = !isComplete || (isRetirement && (state.currentSet.p1 + state.currentSet.p2) > 0);
 
   const totalSetCols = Math.max(
-    state.sets.length + (isComplete ? 0 : 1),
+    state.sets.length + (showCurrentSet ? 1 : 0),
     scoreboard.best_of
   );
 
@@ -188,17 +190,17 @@ export default function ScoreboardLivePage() {
               {set.p1}
             </div>
           ))}
-          {!isComplete && !state.isSuperTiebreak && (
+          {showCurrentSet && !state.isSuperTiebreak && (
             <div className="py-4 text-base font-bold text-text-primary">
               {state.currentSet.p1}
             </div>
           )}
-          {!isComplete && state.isSuperTiebreak && (
+          {showCurrentSet && state.isSuperTiebreak && (
             <div className="py-4 text-base font-bold text-purple-400">
               {state.tiebreak.p1}
             </div>
           )}
-          {Array.from({ length: Math.max(0, scoreboard.best_of - state.sets.length - (isComplete ? 0 : 1)) }).map((_, i) => (
+          {Array.from({ length: Math.max(0, scoreboard.best_of - state.sets.length - (showCurrentSet ? 1 : 0)) }).map((_, i) => (
             <div key={`pad-${i}`} className="py-4 text-base text-text-tertiary">-</div>
           ))}
           {!isComplete && !state.isSuperTiebreak && (
@@ -234,17 +236,17 @@ export default function ScoreboardLivePage() {
               {set.p2}
             </div>
           ))}
-          {!isComplete && !state.isSuperTiebreak && (
+          {showCurrentSet && !state.isSuperTiebreak && (
             <div className="py-4 text-base font-bold text-text-primary">
               {state.currentSet.p2}
             </div>
           )}
-          {!isComplete && state.isSuperTiebreak && (
+          {showCurrentSet && state.isSuperTiebreak && (
             <div className="py-4 text-base font-bold text-purple-400">
               {state.tiebreak.p2}
             </div>
           )}
-          {Array.from({ length: Math.max(0, scoreboard.best_of - state.sets.length - (isComplete ? 0 : 1)) }).map((_, i) => (
+          {Array.from({ length: Math.max(0, scoreboard.best_of - state.sets.length - (showCurrentSet ? 1 : 0)) }).map((_, i) => (
             <div key={`pad-${i}`} className="py-4 text-base text-text-tertiary">-</div>
           ))}
           {!isComplete && !state.isSuperTiebreak && (

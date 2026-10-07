@@ -14,6 +14,10 @@ create table profiles (
 
 alter table profiles enable row level security;
 
+-- anon: public SELECT (policy: using (true)); authenticated: also UPDATE own row
+grant select on public.profiles to anon, authenticated;
+grant update on public.profiles to authenticated;
+
 create policy "Public profiles are viewable by everyone"
   on profiles for select using (true);
 
@@ -53,6 +57,10 @@ create table tournaments (
 
 alter table tournaments enable row level security;
 
+-- anon: public SELECT; authenticated: full write (owner gated by RLS)
+grant select on public.tournaments to anon, authenticated;
+grant insert, update, delete on public.tournaments to authenticated;
+
 create policy "Tournaments are viewable by everyone"
   on tournaments for select using (true);
 
@@ -77,6 +85,10 @@ create table players (
 );
 
 alter table players enable row level security;
+
+-- anon: public SELECT; authenticated: full write (owner gated by RLS)
+grant select on public.players to anon, authenticated;
+grant insert, update, delete on public.players to authenticated;
 
 create policy "Players are viewable by everyone"
   on players for select using (true);
@@ -108,6 +120,10 @@ create table rounds (
 
 alter table rounds enable row level security;
 
+-- anon: public SELECT; authenticated: INSERT + UPDATE (no DELETE policy exists)
+grant select on public.rounds to anon, authenticated;
+grant insert, update on public.rounds to authenticated;
+
 create policy "Rounds are viewable by everyone"
   on rounds for select using (true);
 
@@ -137,6 +153,10 @@ create table matches (
 );
 
 alter table matches enable row level security;
+
+-- anon: public SELECT; authenticated: INSERT + UPDATE (no DELETE policy exists)
+grant select on public.matches to anon, authenticated;
+grant insert, update on public.matches to authenticated;
 
 create policy "Matches are viewable by everyone"
   on matches for select using (true);
@@ -169,6 +189,10 @@ create table match_players (
 );
 
 alter table match_players enable row level security;
+
+-- anon: public SELECT; authenticated: INSERT only (no UPDATE/DELETE policy exists)
+grant select on public.match_players to anon, authenticated;
+grant insert on public.match_players to authenticated;
 
 create policy "Match players are viewable by everyone"
   on match_players for select using (true);
@@ -211,6 +235,10 @@ create table scoreboards (
 
 alter table scoreboards enable row level security;
 
+-- anon: public SELECT; authenticated: full write (owner gated by RLS)
+grant select on public.scoreboards to anon, authenticated;
+grant insert, update, delete on public.scoreboards to authenticated;
+
 create policy "Scoreboards are viewable by everyone"
   on scoreboards for select using (true);
 
@@ -240,6 +268,9 @@ create table payments (
 );
 
 alter table payments enable row level security;
+
+-- authenticated only: SELECT + INSERT (policy: auth.uid() = user_id); UPDATE/DELETE handled server-side via service role
+grant select, insert on public.payments to authenticated;
 
 create policy "Users can view own payments"
   on payments for select using (auth.uid() = user_id);

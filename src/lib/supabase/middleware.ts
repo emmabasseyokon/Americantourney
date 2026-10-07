@@ -58,6 +58,13 @@ export async function updateSession(request: NextRequest) {
   const isLiveRoute = pathname.includes("/live");
   const isWebhook = pathname === "/api/payments/webhook";
 
+  // Signed-in users hitting the landing page go straight to the dashboard
+  if (pathname === "/" && user) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/dashboard";
+    return NextResponse.redirect(url);
+  }
+
   // Allow public, live, and webhook routes without auth
   if (isPublicRoute || isLiveRoute || isWebhook) {
     return supabaseResponse;
